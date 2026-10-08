@@ -201,7 +201,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private boolean hasVideoTracks(Tracks tracks) {
         for (Tracks.Group group : tracks.getGroups()) {
-            if (group.getType() == C.TRACK_TYPE_VIDEO && group.length > 0) {
+            if (group.getType() == C.TRACK_TYPE_VIDEO && group.length() > 0) {
                 return true;
             }
         }

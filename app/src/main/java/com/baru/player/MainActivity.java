@@ -10,6 +10,11 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Patterns;
 import android.view.View;
+import android.view.Gravity;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -269,22 +274,82 @@ public class MainActivity extends AppCompatActivity {
         }
 
         final JSONObject o = options.get(pos);
-        final String[] choices = {
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(4), dp(20), dp(8));
+
+        root.addView(playerChoice(
+                android.R.drawable.ic_media_play,
                 getString(R.string.player_bawaan),
-                getString(R.string.genuine_player)
-        };
+                getString(R.string.player_bawaan_desc),
+                v -> openBuiltinPlayer(o)));
+
+        root.addView(playerChoice(
+                android.R.drawable.ic_menu_share,
+                getString(R.string.network_stream),
+                getString(R.string.network_stream_desc),
+                v -> openGenuinePlayer(o)));
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.pilih_pemutar)
-                .setItems(choices, (dialog, which) -> {
-                    if (which == 0) {
-                        openBuiltinPlayer(o);
-                    } else {
-                        openGenuinePlayer(o);
-                    }
-                })
+                .setView(root)
                 .setNegativeButton(R.string.batal, null)
                 .show();
+    }
+
+    private View playerChoice(int icon, String title, String desc, View.OnClickListener listener) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xFFF2F2F7);
+        bg.setCornerRadius(dp(14));
+        card.setBackground(bg);
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setOnClickListener(listener);
+
+        ImageView image = new ImageView(this);
+        image.setImageResource(icon);
+        image.setPadding(dp(8), dp(8), dp(8), dp(8));
+        GradientDrawable iconBg = new GradientDrawable();
+        iconBg.setColor(0xFFFFFFFF);
+        iconBg.setShape(GradientDrawable.OVAL);
+        image.setBackground(iconBg);
+        card.addView(image, new LinearLayout.LayoutParams(dp(52), dp(52)));
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(dp(14), 0, dp(4), 0);
+
+        TextView name = new TextView(this);
+        name.setText(title);
+        name.setTextSize(16);
+        name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        name.setTextColor(0xFF202124);
+
+        TextView sub = new TextView(this);
+        sub.setText(desc);
+        sub.setTextSize(13);
+        sub.setTextColor(0xFF6B6B70);
+        sub.setPadding(0, dp(3), 0, 0);
+
+        texts.addView(name);
+        texts.addView(sub);
+        card.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, dp(6), 0, dp(6));
+        card.setLayoutParams(lp);
+        return card;
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void openBuiltinPlayer(JSONObject o) {
@@ -306,16 +371,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(Uri.parse(url));
+        // Network Stream menerima URL sebagai VIEW intent. video/* lebih kompatibel
+        // daripada MIME HLS/DASH yang terlalu spesifik pada sebagian versi aplikasi.
+        i.setType("video/*");
         i.setPackage("com.genuine.leone");
-        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
         i.putExtra("title", videoTitle);
+        i.putExtra(Intent.EXTRA_TEXT, url);
 
         String[] h = headerArray(o.optJSONObject("headers"));
         if (h.length > 0) {
             i.putExtra("headers", h);
+            i.putExtra("http_headers", h);
         }
 
         try {
+            if (i.resolveActivity(getPackageManager()) == null) {
+                Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
+                return;
+            }
             startActivity(i);
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
