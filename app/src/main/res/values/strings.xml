@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Baru Player</string>
+    <string name="pilih_platform">Pilih platform</string>
+    <string name="hint_link">Tempel link video</string>
+    <string name="tempel">Tempel</string>
+    <string name="ambil">Ambil info video</string>
+    <string name="link_kosong">Link kosong.</string>
+    <string name="mengambil_info">Mengambil informasi video…</string>
+    <string name="cookie_judul">Butuh cookie</string>
+    <string name="cookie_pesan">Gagal mengambil informasi video.\nKemungkinan: butuh login, video dibatasi, atau diblokir.\n\nSalin isi cookies.txt dari browser (yang sedang login), lalu tempel di bawah. Baris pertamanya harus: # Netscape HTTP Cookie File</string>
+    <string name="cookie_simpan">Simpan &amp; coba lagi</string>
+    <string name="batal">Batal</string>
+    <string name="cookie_hint">Isi cookies.txt</string>
+    <string name="cookie_tersimpan">Cookie disimpan.</string>
+    <string name="gagal_putar">Gagal memutar: %1$s</string>
+    <string name="opsi_tidak_valid">Pilihan tidak valid.</string>
+    <string-array name="platforms">
+        <item>1) YouTube</item>
+        <item>2) Facebook</item>
+        <item>3) Twitch</item>
+        <item>4) TikTok / Instagram / X</item>
+        <item>5) Lainnya (otomatis)</item>
+    </string-array>
+</resources>
