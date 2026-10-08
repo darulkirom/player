@@ -10,11 +10,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Patterns;
 import android.view.View;
-import android.view.Gravity;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -272,138 +267,40 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.opsi_tidak_valid, Toast.LENGTH_SHORT).show();
             return;
         }
-
         final JSONObject o = options.get(pos);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(20), dp(4), dp(20), dp(8));
-
-        root.addView(playerChoice(
-                android.R.drawable.ic_media_play,
-                getString(R.string.player_bawaan),
-                getString(R.string.player_bawaan_desc),
-                v -> openBuiltinPlayer(o)));
-
-        root.addView(playerChoice(
-                0,
-                getString(R.string.network_stream),
-                getString(R.string.network_stream_desc),
-                v -> openGenuinePlayer(o)));
+        // Video & audio terpisah tidak bisa dijadikan satu link: hanya bisa di pemutar bawaan.
+        if ("merge".equals(o.optString("kind"))) {
+            openBuiltIn(o);
+            return;
+        }
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.pilih_pemutar)
-                .setView(root)
+                .setItems(new CharSequence[]{
+                        getString(R.string.pemutar_bawaan),
+                        getString(R.string.pemutar_leone)
+                }, (d, which) -> {
+                    if (which == 0) {
+                        openBuiltIn(o);
+                    } else {
+                        String url = streamUrl(o);
+                        if (url == null) {
+                            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
+                        } else {
+                            openLeone(url, o);
+                        }
+                    }
+                })
                 .setNegativeButton(R.string.batal, null)
                 .show();
     }
 
-    private View playerChoice(int icon, String title, String desc, View.OnClickListener listener) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(dp(14), dp(12), dp(14), dp(12));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xFFF2F2F7);
-        bg.setCornerRadius(dp(14));
-        card.setBackground(bg);
-        card.setClickable(true);
-        card.setFocusable(true);
-        card.setOnClickListener(listener);
-
-        ImageView image = new ImageView(this);
-        if (icon == 0) {
-            try {
-                image.setImageDrawable(getPackageManager().getApplicationIcon("com.genuine.leone"));
-            } catch (Exception e) {
-                image.setImageResource(android.R.drawable.ic_media_play);
-            }
-        } else {
-            image.setImageResource(icon);
-        }
-        image.setPadding(dp(8), dp(8), dp(8), dp(8));
-        GradientDrawable iconBg = new GradientDrawable();
-        iconBg.setColor(0xFFFFFFFF);
-        iconBg.setShape(GradientDrawable.OVAL);
-        image.setBackground(iconBg);
-        card.addView(image, new LinearLayout.LayoutParams(dp(52), dp(52)));
-
-        LinearLayout texts = new LinearLayout(this);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        texts.setPadding(dp(14), 0, dp(4), 0);
-
-        TextView name = new TextView(this);
-        name.setText(title);
-        name.setTextSize(16);
-        name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        name.setTextColor(0xFF202124);
-
-        TextView sub = new TextView(this);
-        sub.setText(desc);
-        sub.setTextSize(13);
-        sub.setTextColor(0xFF6B6B70);
-        sub.setPadding(0, dp(3), 0, 0);
-
-        texts.addView(name);
-        texts.addView(sub);
-        card.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, dp(6), 0, dp(6));
-        card.setLayoutParams(lp);
-        return card;
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
-    private void openBuiltinPlayer(JSONObject o) {
+    private void openBuiltIn(JSONObject o) {
         Intent i = new Intent(this, PlayerActivity.class);
         i.putExtra(PlayerActivity.EXTRA_OPTION, o.toString());
         i.putExtra(PlayerActivity.EXTRA_TITLE, videoTitle);
         startActivity(i);
-    }
-
-    /**
-     * Buka langsung aplikasi com.genuine.leone.
-     * Tidak memakai chooser Android, jadi targetnya benar-benar aplikasi tersebut.
-     */
-    private void openGenuinePlayer(JSONObject o) {
-        String url = streamUrl(o);
-        if (url == null) {
-            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        // Network Stream advertises normal HTTP/HTTPS video links as video/*.
-        // application/x-mpegURL can make Android's resolver reject the app even
-        // though Network Stream is installed.
-        i.setDataAndType(Uri.parse(url), "video/*");
-        i.setPackage("com.genuine.leone");
-        i.putExtra("title", videoTitle);
-        i.putExtra("url", url);
-        i.putExtra("referUrl", o.optString("referer", ""));
-
-        String[] h = headerArray(o.optJSONObject("headers"));
-        if (h.length > 0) {
-            i.putExtra("headers", h);
-            i.putExtra("http_headers", h);
-        }
-
-        try {
-            // Check the package itself instead of resolveActivity(). The latter
-            // can return null when an installed app has narrower intent filters.
-            getPackageManager().getApplicationInfo("com.genuine.leone", 0);
-            startActivity(i);
-        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-            Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
-        }
     }
 
     /** Link yang dikirim ke pemutar. Untuk hls_split: master .m3u8 lokal. */
@@ -450,17 +347,31 @@ public class MainActivity extends AppCompatActivity {
         return l.toArray(new String[0]);
     }
 
-    private void openExternal(String url, JSONObject o) {
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
-        i.putExtra("title", videoTitle);
+    private static final String LEONE_PACKAGE = "com.genuine.leone";
+
+    /** Kirim intent VIEW hanya ke aplikasi Leone (tanpa chooser). */
+    private void openLeone(String url, JSONObject o) {
         String[] h = headerArray(o.optJSONObject("headers"));
-        if (h.length > 0) i.putExtra("headers", h); // dibaca MX Player; app lain mengabaikan
         try {
-            startActivity(Intent.createChooser(i, getString(R.string.buka_dengan)));
+            startActivity(leoneIntent(url, mimeFor(o.optString("kind")), h));
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.tidak_ada_player, Toast.LENGTH_LONG).show();
+            // Cadangan: tanpa tipe MIME, siapa tahu Leone hanya mendaftarkan filter data/skema
+            try {
+                startActivity(leoneIntent(url, null, h));
+            } catch (ActivityNotFoundException e2) {
+                Toast.makeText(this, R.string.leone_tidak_ada, Toast.LENGTH_LONG).show();
+            }
         }
+    }
+
+    private Intent leoneIntent(String url, String mime, String[] headers) {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        if (mime != null) i.setDataAndType(Uri.parse(url), mime);
+        else i.setData(Uri.parse(url));
+        i.setPackage(LEONE_PACKAGE);
+        i.putExtra("title", videoTitle);
+        if (headers.length > 0) i.putExtra("headers", headers);
+        return i;
     }
 
     private void copyLink(int pos) {

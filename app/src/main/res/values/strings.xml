@@ -14,25 +14,36 @@
     <string name="cookie_tersimpan">Cookie disimpan.</string>
     <string name="gagal_putar">Gagal memutar: %1$s</string>
     <string name="opsi_tidak_valid">Pilihan tidak valid.</string>
-    <string name="petunjuk">Ketuk: buka di aplikasi pemutar · Tahan: salin link</string>
-    <string name="pilih_pemutar">Pilih pemutar</string>
-    <string name="player_bawaan">Player bawaan</string>
-    <string name="genuine_player">Network Stream</string>
-    <string name="network_stream">Network Stream</string>
-    <string name="network_stream_desc">Buka langsung di Network Stream</string>
-    <string name="player_bawaan_desc">Gunakan player bawaan aplikasi</string>
-    <string name="genuine_tidak_ada">Network Stream tidak terpasang.</string>
-    <string name="pilih_resolusi">Pilih resolusi</string>
-    <string name="resolusi_tidak_tersedia">Resolusi video tidak tersedia.</string>
-    <string name="pilih_orientasi">Pilih orientasi</string>
-    <string name="orientasi_sensor">Sensor otomatis</string>
-    <string name="orientasi_portrait">Portrait</string>
-    <string name="orientasi_landscape">Landscape</string>
-    <string name="buka_dengan">Buka dengan</string>
-    <string name="tidak_ada_player">Tidak ada aplikasi pemutar yang bisa membuka link ini.</string>
+    <string name="petunjuk">Ketuk: pilih pemutar · Tahan: salin link</string>
     <string name="link_disalin">Link disalin.</string>
     <string name="tidak_bisa_salin">Video dan audio terpisah, tidak bisa disalin sebagai satu link. Ketuk untuk memutar di pemutar bawaan.</string>
     <string name="server_gagal">Gagal menyiapkan link lokal (port 8765 mungkin dipakai aplikasi lain).</string>
+    <string name="pilih_pemutar">Putar dengan</string>
+    <string name="pemutar_bawaan">Pemutar bawaan (kualitas, orientasi, ukuran layar)</string>
+    <string name="pemutar_leone">Leone (com.genuine.leone)</string>
+    <string name="leone_tidak_ada">Leone (com.genuine.leone) tidak terpasang atau tidak bisa membuka link ini.</string>
+    <string name="tombol_kualitas">Kualitas</string>
+    <string name="tombol_orientasi">Orientasi</string>
+    <string name="tombol_ukuran">Ukuran</string>
+    <string name="judul_kualitas">Kualitas video</string>
+    <string name="judul_orientasi">Orientasi layar</string>
+    <string name="judul_ukuran">Ukuran tampilan</string>
+    <string name="kualitas_auto">Otomatis</string>
+    <string name="kualitas_satu">Sumber ini hanya punya satu kualitas. Pilih kualitas lain dari daftar utama.</string>
+    <string name="kualitas_belum_siap">Video belum siap, coba lagi sebentar.</string>
+    <string-array name="orientasi_opsi">
+        <item>Otomatis (ikut pengaturan sistem)</item>
+        <item>Landscape</item>
+        <item>Portrait</item>
+        <item>Ikuti sensor (abaikan kunci rotasi)</item>
+    </string-array>
+    <string-array name="ukuran_opsi">
+        <item>Penuhi layar, potong tepi (Zoom)</item>
+        <item>Penuhi layar, regangkan (Fill)</item>
+        <item>Muat utuh, ada bar hitam (Fit)</item>
+        <item>Lebar penuh</item>
+        <item>Tinggi penuh</item>
+    </string-array>
     <string-array name="platforms">
         <item>1) YouTube</item>
         <item>2) Facebook</item>
