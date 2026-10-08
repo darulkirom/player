@@ -1,18 +1,12 @@
 package com.baru.player;
 
 import android.content.pm.ActivityInfo;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.OptIn;
@@ -47,20 +41,13 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * Player Media3 bawaan.
- *
- * Fitur:
- * - pemilihan resolusi video dari track yang tersedia
- * - FIT / FILL
- * - Portrait / Landscape / Sensor
- * - fullscreen immersive untuk memenuhi layar HP
- * - HLS, DASH, progressive, dan video+audio terpisah
- */
+/** Media3 PlayerView dengan controller bawaan Media3. */
 @OptIn(markerClass = UnstableApi.class)
 public class PlayerActivity extends AppCompatActivity {
 
@@ -71,37 +58,20 @@ public class PlayerActivity extends AppCompatActivity {
     private ExoPlayer player;
     private DefaultTrackSelector trackSelector;
     private JSONObject option;
-
-    private LinearLayout topBar;
-    private LinearLayout bottomBar;
-    private TextView titleView;
-    private Button qualityButton;
-    private Button resizeButton;
-    private Button orientationButton;
-    private Button fullscreenButton;
-    private Button fullscreenTopButton;
-
     private boolean fullscreen = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().setStatusBarColor(Color.BLACK);
-        getWindow().setNavigationBarColor(Color.BLACK);
-
         setContentView(R.layout.activity_player);
 
         playerView = findViewById(R.id.player_view);
-        topBar = findViewById(R.id.top_bar);
-        bottomBar = findViewById(R.id.bottom_bar);
-        titleView = findViewById(R.id.player_title);
-        qualityButton = findViewById(R.id.btn_quality);
-        resizeButton = findViewById(R.id.btn_resize);
-        orientationButton = findViewById(R.id.btn_orientation);
-        fullscreenButton = findViewById(R.id.btn_fullscreen);
-        fullscreenTopButton = findViewById(R.id.btn_fullscreen_top);
+        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
+        playerView.setKeepContentOnPlayerReset(true);
+        playerView.setControllerAutoShow(true);
+        playerView.setControllerHideOnTouch(true);
+        playerView.setControllerShowTimeoutMs(3500);
 
         try {
             option = new JSONObject(getIntent().getStringExtra(EXTRA_OPTION));
@@ -111,32 +81,26 @@ public class PlayerActivity extends AppCompatActivity {
             return;
         }
 
-        String title = getIntent().getStringExtra(EXTRA_TITLE);
-        if (title != null && !title.isEmpty()) {
-            titleView.setText(title);
+        // Fullscreen adalah tombol bawaan Media3, bukan tombol buatan sendiri.
+        playerView.setFullscreenButtonClickListener(isFullscreen -> {
+            if (isFullscreen) enterFullscreen();
+            else exitFullscreen();
+        });
+        playerView.setFullscreenButtonState(true);
+
+        // Gunakan tombol Settings bawaan Media3 untuk menu tambahan kita.
+        View settings = playerView.findViewById(androidx.media3.ui.R.id.exo_settings);
+        if (settings != null) {
+            settings.setOnClickListener(v -> showPlayerSettings());
         }
 
-        resizeButton.setText("FIT");
-        orientationButton.setText("ROT");
-        fullscreenButton.setText("FULL");
-        fullscreenTopButton.setText("FULL");
-
-        qualityButton.setOnClickListener(v -> showQualityDialog());
-        resizeButton.setOnClickListener(v -> toggleResizeMode());
-        orientationButton.setOnClickListener(v -> showOrientationDialog());
-        fullscreenButton.setOnClickListener(v -> toggleFullscreen());
-        fullscreenTopButton.setOnClickListener(v -> toggleFullscreen());
-
-        // Mulai dalam fullscreen agar video benar-benar menggunakan layar HP.
         enterFullscreen();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (player == null && option != null) {
-            initPlayer();
-        }
+        if (player == null && option != null) initPlayer();
     }
 
     @Override
@@ -148,98 +112,78 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus && fullscreen) {
-            applyImmersive();
-        }
+        if (hasFocus && fullscreen) applyImmersive();
     }
 
     private void initPlayer() {
         try {
             trackSelector = new DefaultTrackSelector(this);
-            trackSelector.setParameters(
-                    trackSelector.buildUponParameters()
-                            .setTunnelingEnabled(false)
-                            .build()
-            );
-
-            MediaSource source = buildSource(option);
-
             player = new ExoPlayer.Builder(this)
                     .setTrackSelector(trackSelector)
                     .build();
-
             playerView.setPlayer(player);
 
             player.addListener(new Player.Listener() {
                 @Override
                 public void onPlayerError(PlaybackException error) {
-                    Toast.makeText(
-                            PlayerActivity.this,
+                    Toast.makeText(PlayerActivity.this,
                             getString(R.string.gagal_putar, error.getErrorCodeName()),
-                            Toast.LENGTH_LONG
-                    ).show();
-                }
-
-                @Override
-                public void onTracksChanged(Tracks tracks) {
-                    qualityButton.setEnabled(hasVideoTracks(tracks));
+                            Toast.LENGTH_LONG).show();
                 }
             });
 
-            player.setMediaSource(source);
+            player.setMediaSource(buildSource(option));
             player.prepare();
-            player.setPlayWhenReady(true);
-
+            player.play();
         } catch (Exception e) {
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     getString(R.string.gagal_putar, e.toString()),
-                    Toast.LENGTH_LONG
-            ).show();
+                    Toast.LENGTH_LONG).show();
         }
     }
 
-    private boolean hasVideoTracks(Tracks tracks) {
-        for (Tracks.Group group : tracks.getGroups()) {
-            if (group.getType() == C.TRACK_TYPE_VIDEO && group.length > 0) {
-                return true;
-            }
-        }
-        return false;
+    /** Menu dari tombol Settings bawaan Media3. */
+    private void showPlayerSettings() {
+        String[] items = {
+                getString(R.string.pilih_resolusi),
+                "Ukuran video: " + resizeLabel(),
+                getString(R.string.pilih_orientasi)
+        };
+        new AlertDialog.Builder(this)
+                .setTitle("Pengaturan pemutar")
+                .setItems(items, (dialog, which) -> {
+                    if (which == 0) showQualityDialog();
+                    else if (which == 1) toggleResizeMode();
+                    else showOrientationDialog();
+                })
+                .setNegativeButton(R.string.batal, null)
+                .show();
+    }
+
+    private String resizeLabel() {
+        return playerView.getResizeMode() == AspectRatioFrameLayout.RESIZE_MODE_FILL
+                ? "FILL" : "FIT";
     }
 
     private void showQualityDialog() {
         if (player == null) return;
-
         Tracks tracks = player.getCurrentTracks();
-        final java.util.ArrayList<QualityItem> items = new java.util.ArrayList<>();
+        ArrayList<QualityItem> items = new ArrayList<>();
 
-        // Kumpulkan semua resolusi video unik.
         for (Tracks.Group group : tracks.getGroups()) {
             if (group.getType() != C.TRACK_TYPE_VIDEO) continue;
-
             TrackGroup tg = group.getMediaTrackGroup();
             for (int i = 0; i < group.length; i++) {
                 if (!group.isTrackSupported(i)) continue;
-
                 Format f = tg.getFormat(i);
                 if (f.height <= 0) continue;
-
                 String label = f.height + "p";
-                if (f.width > 0) {
-                    label += " (" + f.width + "x" + f.height + ")";
-                }
-
+                if (f.width > 0) label += "  •  " + f.width + "×" + f.height;
                 boolean exists = false;
                 for (QualityItem q : items) {
-                    if (q.height == f.height) {
-                        exists = true;
-                        break;
-                    }
+                    if (q.height == f.height) { exists = true; break; }
                 }
-                if (!exists) {
-                    items.add(new QualityItem(group, i, f.height, label));
-                }
+                if (!exists) items.add(new QualityItem(group, i, f.height, label));
             }
         }
 
@@ -247,48 +191,31 @@ public class PlayerActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.resolusi_tidak_tersedia, Toast.LENGTH_SHORT).show();
             return;
         }
-
-        items.sort((a, b) -> Integer.compare(b.height, a.height));
-
+        Collections.sort(items, (a, b) -> Integer.compare(b.height, a.height));
         String[] labels = new String[items.size()];
-        for (int i = 0; i < items.size(); i++) {
-            labels[i] = items.get(i).label;
-        }
+        for (int i = 0; i < items.size(); i++) labels[i] = items.get(i).label;
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.pilih_resolusi)
-                .setItems(labels, (dialog, which) -> selectQuality(items.get(which)))
+                .setItems(labels, (d, which) -> selectQuality(items.get(which)))
                 .setNegativeButton(R.string.batal, null)
                 .show();
     }
 
     private void selectQuality(QualityItem item) {
         if (trackSelector == null) return;
-
-        DefaultTrackSelector.Parameters.Builder builder =
-                trackSelector.buildUponParameters();
-
-        builder.clearOverridesOfType(C.TRACK_TYPE_VIDEO);
-        builder.addOverride(
-                new androidx.media3.common.TrackSelectionOverride(
-                        item.group.getMediaTrackGroup(),
-                        java.util.Collections.singletonList(item.trackIndex)
-                )
-        );
-
-        trackSelector.setParameters(builder);
-        Toast.makeText(this, item.label, Toast.LENGTH_SHORT).show();
+        DefaultTrackSelector.Parameters.Builder b = trackSelector.buildUponParameters();
+        b.clearOverridesOfType(C.TRACK_TYPE_VIDEO);
+        b.addOverride(new androidx.media3.common.TrackSelectionOverride(
+                item.group.getMediaTrackGroup(), Collections.singletonList(item.trackIndex)));
+        trackSelector.setParameters(b);
     }
 
     private void toggleResizeMode() {
-        int mode = playerView.getResizeMode();
-
-        if (mode == AspectRatioFrameLayout.RESIZE_MODE_FIT) {
+        if (playerView.getResizeMode() == AspectRatioFrameLayout.RESIZE_MODE_FIT) {
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
-            resizeButton.setText("FILL");
         } else {
             playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT);
-            resizeButton.setText("FIT");
         }
     }
 
@@ -298,55 +225,32 @@ public class PlayerActivity extends AppCompatActivity {
                 getString(R.string.orientasi_portrait),
                 getString(R.string.orientasi_landscape)
         };
-
         new AlertDialog.Builder(this)
                 .setTitle(R.string.pilih_orientasi)
-                .setItems(choices, (dialog, which) -> {
-                    if (which == 0) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
-                    } else if (which == 1) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                    } else {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    }
+                .setItems(choices, (d, which) -> {
+                    if (which == 0) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+                    else if (which == 1) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    else setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 })
                 .setNegativeButton(R.string.batal, null)
                 .show();
     }
 
-    private void toggleFullscreen() {
-        if (fullscreen) {
-            exitFullscreen();
-        } else {
-            enterFullscreen();
-        }
-    }
-
     private void enterFullscreen() {
         fullscreen = true;
+        playerView.setFullscreenButtonState(true);
         applyImmersive();
-        fullscreenButton.setText("EXIT");
-        fullscreenTopButton.setText("EXIT");
-        topBar.setVisibility(View.GONE);
-        bottomBar.setVisibility(View.VISIBLE);
     }
 
     private void exitFullscreen() {
         fullscreen = false;
-
+        playerView.setFullscreenButtonState(false);
         if (android.os.Build.VERSION.SDK_INT >= 30) {
             WindowInsetsController c = getWindow().getInsetsController();
-            if (c != null) {
-                c.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-            }
+            if (c != null) c.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
         } else {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         }
-
-        fullscreenButton.setText("FULL");
-        fullscreenTopButton.setText("FULL");
-        topBar.setVisibility(View.VISIBLE);
-        bottomBar.setVisibility(View.VISIBLE);
     }
 
     private void applyImmersive() {
@@ -354,9 +258,7 @@ public class PlayerActivity extends AppCompatActivity {
             WindowInsetsController c = getWindow().getInsetsController();
             if (c != null) {
                 c.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-                c.setSystemBarsBehavior(
-                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                );
+                c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
             }
         } else {
             getWindow().getDecorView().setSystemUiVisibility(
@@ -365,8 +267,7 @@ public class PlayerActivity extends AppCompatActivity {
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            );
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
     }
 
@@ -375,15 +276,12 @@ public class PlayerActivity extends AppCompatActivity {
             player.release();
             player = null;
         }
-        playerView.setPlayer(null);
+        if (playerView != null) playerView.setPlayer(null);
     }
-
-    // ------------------------------------------------------------ sumber
 
     private static Map<String, String> toMap(JSONObject h) {
         Map<String, String> m = new HashMap<>();
         if (h == null) return m;
-
         Iterator<String> it = h.keys();
         while (it.hasNext()) {
             String k = it.next();
@@ -398,63 +296,38 @@ public class PlayerActivity extends AppCompatActivity {
                 .setConnectTimeoutMs(15000)
                 .setReadTimeoutMs(20000)
                 .setDefaultRequestProperties(toMap(headers));
-
         return new DefaultDataSource.Factory(this, http);
     }
 
     private MediaSource buildSource(JSONObject o) throws Exception {
         String kind = o.optString("kind", "single");
         JSONObject headers = o.optJSONObject("headers");
-
         switch (kind) {
             case "hls":
             case "hls_master":
                 return new HlsMediaSource.Factory(dataFactory(headers))
-                        .createMediaSource(
-                                MediaItem.fromUri(o.getString("url"))
-                        );
-
+                        .createMediaSource(MediaItem.fromUri(o.getString("url")));
             case "hls_split": {
                 File f = new File(getCacheDir(), "master_split.m3u8");
-
-                try (Writer w = new OutputStreamWriter(
-                        new FileOutputStream(f),
-                        StandardCharsets.UTF_8
-                )) {
+                try (Writer w = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8)) {
                     w.write(o.getString("master_text"));
                 }
-
                 return new HlsMediaSource.Factory(dataFactory(headers))
                         .createMediaSource(MediaItem.fromUri(Uri.fromFile(f)));
             }
-
             case "dash":
                 return new DashMediaSource.Factory(dataFactory(headers))
-                        .createMediaSource(
-                                MediaItem.fromUri(o.getString("url"))
-                        );
-
+                        .createMediaSource(MediaItem.fromUri(o.getString("url")));
             case "merge": {
-                MediaSource v = new ProgressiveMediaSource.Factory(
-                        dataFactory(headers)
-                ).createMediaSource(
-                        MediaItem.fromUri(o.getString("url"))
-                );
-
-                MediaSource a = new ProgressiveMediaSource.Factory(
-                        dataFactory(o.optJSONObject("audio_headers"))
-                ).createMediaSource(
-                        MediaItem.fromUri(o.getString("audio_url"))
-                );
-
+                MediaSource v = new ProgressiveMediaSource.Factory(dataFactory(headers))
+                        .createMediaSource(MediaItem.fromUri(o.getString("url")));
+                MediaSource a = new ProgressiveMediaSource.Factory(dataFactory(o.optJSONObject("audio_headers")))
+                        .createMediaSource(MediaItem.fromUri(o.getString("audio_url")));
                 return new MergingMediaSource(v, a);
             }
-
             default:
                 return new DefaultMediaSourceFactory(dataFactory(headers))
-                        .createMediaSource(
-                                MediaItem.fromUri(o.getString("url"))
-                        );
+                        .createMediaSource(MediaItem.fromUri(o.getString("url")));
         }
     }
 
@@ -463,12 +336,8 @@ public class PlayerActivity extends AppCompatActivity {
         final int trackIndex;
         final int height;
         final String label;
-
         QualityItem(Tracks.Group group, int trackIndex, int height, String label) {
-            this.group = group;
-            this.trackIndex = trackIndex;
-            this.height = height;
-            this.label = label;
+            this.group = group; this.trackIndex = trackIndex; this.height = height; this.label = label;
         }
     }
 }

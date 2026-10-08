@@ -9,77 +9,10 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:keepScreenOn="true"
         app:show_buffering="when_playing"
-        app:resize_mode="fit" />
-
-    <LinearLayout
-        android:id="@+id/top_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:background="#99000000">
-
-        <TextView
-            android:id="@+id/player_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:padding="8dp" />
-
-        <Button
-            android:id="@+id/btn_fullscreen_top"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FULL"
-            android:minWidth="0dp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bottom_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="6dp"
-        android:background="#99000000">
-
-        <Button
-            android:id="@+id/btn_quality"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="RES"
-            android:minWidth="0dp" />
-
-        <Button
-            android:id="@+id/btn_resize"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FIT"
-            android:minWidth="0dp" />
-
-        <Button
-            android:id="@+id/btn_orientation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ROT"
-            android:minWidth="0dp" />
-
-        <Button
-            android:id="@+id/btn_fullscreen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="FULL"
-            android:minWidth="0dp" />
-    </LinearLayout>
+        app:resize_mode="fit"
+        app:use_controller="true"
+        app:controller_show_timeout_ms="3500" />
 
 </FrameLayout>

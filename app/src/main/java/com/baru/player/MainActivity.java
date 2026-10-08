@@ -286,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
                 v -> openBuiltinPlayer(o)));
 
         root.addView(playerChoice(
-                android.R.drawable.ic_menu_share,
+                0,
                 getString(R.string.network_stream),
                 getString(R.string.network_stream_desc),
                 v -> openGenuinePlayer(o)));
@@ -313,7 +313,15 @@ public class MainActivity extends AppCompatActivity {
         card.setOnClickListener(listener);
 
         ImageView image = new ImageView(this);
-        image.setImageResource(icon);
+        if (icon == 0) {
+            try {
+                image.setImageDrawable(getPackageManager().getApplicationIcon("com.genuine.leone"));
+            } catch (Exception e) {
+                image.setImageResource(android.R.drawable.ic_media_play);
+            }
+        } else {
+            image.setImageResource(icon);
+        }
         image.setPadding(dp(8), dp(8), dp(8), dp(8));
         GradientDrawable iconBg = new GradientDrawable();
         iconBg.setColor(0xFFFFFFFF);
@@ -371,13 +379,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setData(Uri.parse(url));
-        // Network Stream menerima URL sebagai VIEW intent. video/* lebih kompatibel
-        // daripada MIME HLS/DASH yang terlalu spesifik pada sebagian versi aplikasi.
-        i.setType("video/*");
+        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
         i.setPackage("com.genuine.leone");
         i.putExtra("title", videoTitle);
         i.putExtra(Intent.EXTRA_TEXT, url);
+        i.putExtra("url", url);
+        i.putExtra("referUrl", o.optString("referer", ""));
 
         String[] h = headerArray(o.optJSONObject("headers"));
         if (h.length > 0) {
