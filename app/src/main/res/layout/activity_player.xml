@@ -13,6 +13,5 @@
         app:show_buffering="when_playing"
         app:resize_mode="fit"
         app:use_controller="true"
-        app:controller_show_timeout_ms="3500" />
 
 </FrameLayout>
