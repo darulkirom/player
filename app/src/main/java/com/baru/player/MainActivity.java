@@ -379,10 +379,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
+        // Network Stream advertises normal HTTP/HTTPS video links as video/*.
+        // application/x-mpegURL can make Android's resolver reject the app even
+        // though Network Stream is installed.
+        i.setDataAndType(Uri.parse(url), "video/*");
         i.setPackage("com.genuine.leone");
         i.putExtra("title", videoTitle);
-        i.putExtra(Intent.EXTRA_TEXT, url);
         i.putExtra("url", url);
         i.putExtra("referUrl", o.optString("referer", ""));
 
@@ -393,11 +395,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         try {
-            if (i.resolveActivity(getPackageManager()) == null) {
-                Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
-                return;
-            }
+            // Check the package itself instead of resolveActivity(). The latter
+            // can return null when an installed app has narrower intent filters.
+            getPackageManager().getApplicationInfo("com.genuine.leone", 0);
             startActivity(i);
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
         }

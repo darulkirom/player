@@ -17,11 +17,11 @@
     <string name="petunjuk">Ketuk: buka di aplikasi pemutar · Tahan: salin link</string>
     <string name="pilih_pemutar">Pilih pemutar</string>
     <string name="player_bawaan">Player bawaan</string>
-    <string name="genuine_player">com.genuine.leone</string>
+    <string name="genuine_player">Network Stream</string>
     <string name="network_stream">Network Stream</string>
     <string name="network_stream_desc">Buka langsung di Network Stream</string>
     <string name="player_bawaan_desc">Gunakan player bawaan aplikasi</string>
-    <string name="genuine_tidak_ada">Aplikasi com.genuine.leone tidak terpasang.</string>
+    <string name="genuine_tidak_ada">Network Stream tidak terpasang.</string>
     <string name="pilih_resolusi">Pilih resolusi</string>
     <string name="resolusi_tidak_tersedia">Resolusi video tidak tersedia.</string>
     <string name="pilih_orientasi">Pilih orientasi</string>
