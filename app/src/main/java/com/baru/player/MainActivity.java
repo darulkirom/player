@@ -262,45 +262,66 @@ public class MainActivity extends AppCompatActivity {
 
     // --------------------------------------------------------------- putar
 
-    private void play(int pos) {
+    private static final String LEONE_PACKAGE = "com.genuine.leone";
+
+    private void play(final int pos) {
         if (pos < 0 || pos >= options.size()) {
             Toast.makeText(this, R.string.opsi_tidak_valid, Toast.LENGTH_SHORT).show();
             return;
         }
         final JSONObject o = options.get(pos);
 
-        // Video & audio terpisah tidak bisa dijadikan satu link: hanya bisa di pemutar bawaan.
+        // Video & audio terpisah tidak bisa jadi satu link: hanya bisa di pemutar bawaan.
         if ("merge".equals(o.optString("kind"))) {
-            openBuiltIn(o);
+            openBuiltIn(pos);
             return;
         }
 
         new AlertDialog.Builder(this)
-                .setTitle(R.string.pilih_pemutar)
-                .setItems(new CharSequence[]{
-                        getString(R.string.pemutar_bawaan),
-                        getString(R.string.pemutar_leone)
+                .setTitle(R.string.buka_di)
+                .setItems(new String[]{
+                        getString(R.string.buka_leone),
+                        getString(R.string.putar_bawaan)
                 }, (d, which) -> {
-                    if (which == 0) {
-                        openBuiltIn(o);
-                    } else {
-                        String url = streamUrl(o);
-                        if (url == null) {
-                            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
-                        } else {
-                            openLeone(url, o);
-                        }
-                    }
+                    if (which == 0) openLeone(o);
+                    else openBuiltIn(pos);
                 })
-                .setNegativeButton(R.string.batal, null)
                 .show();
     }
 
-    private void openBuiltIn(JSONObject o) {
+    private void openBuiltIn(int pos) {
+        JSONArray arr = new JSONArray();
+        for (JSONObject x : options) arr.put(x);
         Intent i = new Intent(this, PlayerActivity.class);
-        i.putExtra(PlayerActivity.EXTRA_OPTION, o.toString());
+        i.putExtra(PlayerActivity.EXTRA_OPTIONS, arr.toString());
+        i.putExtra(PlayerActivity.EXTRA_INDEX, pos);
         i.putExtra(PlayerActivity.EXTRA_TITLE, videoTitle);
         startActivity(i);
+    }
+
+    private void openLeone(JSONObject o) {
+        String url = streamUrl(o);
+        if (url == null) {
+            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setPackage(LEONE_PACKAGE);
+        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
+        i.putExtra("title", videoTitle);
+        String[] h = headerArray(o.optJSONObject("headers"));
+        if (h.length > 0) i.putExtra("headers", h);
+        try {
+            startActivity(i);
+        } catch (ActivityNotFoundException e) {
+            // coba lagi tanpa mime type, siapa tahu Leone hanya mendaftarkan filter URL
+            i.setData(Uri.parse(url));
+            try {
+                startActivity(i);
+            } catch (ActivityNotFoundException e2) {
+                Toast.makeText(this, R.string.leone_gagal, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     /** Link yang dikirim ke pemutar. Untuk hls_split: master .m3u8 lokal. */
@@ -345,33 +366,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return l.toArray(new String[0]);
-    }
-
-    private static final String LEONE_PACKAGE = "com.genuine.leone";
-
-    /** Kirim intent VIEW hanya ke aplikasi Leone (tanpa chooser). */
-    private void openLeone(String url, JSONObject o) {
-        String[] h = headerArray(o.optJSONObject("headers"));
-        try {
-            startActivity(leoneIntent(url, mimeFor(o.optString("kind")), h));
-        } catch (ActivityNotFoundException e) {
-            // Cadangan: tanpa tipe MIME, siapa tahu Leone hanya mendaftarkan filter data/skema
-            try {
-                startActivity(leoneIntent(url, null, h));
-            } catch (ActivityNotFoundException e2) {
-                Toast.makeText(this, R.string.leone_tidak_ada, Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    private Intent leoneIntent(String url, String mime, String[] headers) {
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        if (mime != null) i.setDataAndType(Uri.parse(url), mime);
-        else i.setData(Uri.parse(url));
-        i.setPackage(LEONE_PACKAGE);
-        i.putExtra("title", videoTitle);
-        if (headers.length > 0) i.putExtra("headers", headers);
-        return i;
     }
 
     private void copyLink(int pos) {

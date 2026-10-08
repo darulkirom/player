@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black">
@@ -10,56 +9,30 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:resize_mode="zoom"
-        app:show_buffering="when_playing" />
+        app:controller_layout_id="@layout/player_controls"
+        app:resize_mode="fit"
+        app:show_buffering="when_playing"
+        app:show_timeout="4000" />
 
-    <!-- Bar atas: ikut muncul/hilang bersama kontrol pemutar -->
-    <LinearLayout
-        android:id="@+id/top_bar"
+    <!-- Lapisan saat layar dikunci: ketuk untuk memunculkan tombol buka kunci -->
+    <FrameLayout
+        android:id="@+id/lock_layer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:background="#99000000"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
 
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/btn_quality"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="0dp"
-            android:text="@string/tombol_kualitas"
-            android:textColor="@android:color/white" />
-
-        <Button
-            android:id="@+id/btn_orientation"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="0dp"
-            android:text="@string/tombol_orientasi"
-            android:textColor="@android:color/white" />
-
-        <Button
-            android:id="@+id/btn_resize"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="0dp"
-            android:text="@string/tombol_ukuran"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
+        <ImageButton
+            android:id="@+id/btn_unlock"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_gradient_top"
+            android:contentDescription="@string/cd_buka_kunci"
+            android:padding="10dp"
+            android:src="@drawable/ic_lock_open"
+            android:visibility="gone" />
+    </FrameLayout>
 </FrameLayout>

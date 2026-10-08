@@ -14,35 +14,46 @@
     <string name="cookie_tersimpan">Cookie disimpan.</string>
     <string name="gagal_putar">Gagal memutar: %1$s</string>
     <string name="opsi_tidak_valid">Pilihan tidak valid.</string>
-    <string name="petunjuk">Ketuk: pilih pemutar · Tahan: salin link</string>
+    <string name="petunjuk">Ketuk: pilih Leone atau pemutar bawaan · Tahan: salin link</string>
+    <string name="buka_dengan">Buka dengan</string>
+    <string name="tidak_ada_player">Tidak ada aplikasi pemutar yang bisa membuka link ini.</string>
     <string name="link_disalin">Link disalin.</string>
     <string name="tidak_bisa_salin">Video dan audio terpisah, tidak bisa disalin sebagai satu link. Ketuk untuk memutar di pemutar bawaan.</string>
     <string name="server_gagal">Gagal menyiapkan link lokal (port 8765 mungkin dipakai aplikasi lain).</string>
-    <string name="pilih_pemutar">Putar dengan</string>
-    <string name="pemutar_bawaan">Pemutar bawaan (kualitas, orientasi, ukuran layar)</string>
-    <string name="pemutar_leone">Leone (com.genuine.leone)</string>
-    <string name="leone_tidak_ada">Leone (com.genuine.leone) tidak terpasang atau tidak bisa membuka link ini.</string>
-    <string name="tombol_kualitas">Kualitas</string>
-    <string name="tombol_orientasi">Orientasi</string>
-    <string name="tombol_ukuran">Ukuran</string>
-    <string name="judul_kualitas">Kualitas video</string>
-    <string name="judul_orientasi">Orientasi layar</string>
-    <string name="judul_ukuran">Ukuran tampilan</string>
-    <string name="kualitas_auto">Otomatis</string>
-    <string name="kualitas_satu">Sumber ini hanya punya satu kualitas. Pilih kualitas lain dari daftar utama.</string>
-    <string name="kualitas_belum_siap">Video belum siap, coba lagi sebentar.</string>
-    <string-array name="orientasi_opsi">
-        <item>Otomatis (ikut pengaturan sistem)</item>
+    <string name="buka_di">Buka di…</string>
+    <string name="buka_leone">Aplikasi Leone (com.genuine.leone)</string>
+    <string name="putar_bawaan">Pemutar bawaan (pilih kualitas, rotasi, ukuran)</string>
+    <string name="leone_gagal">Aplikasi com.genuine.leone tidak terpasang atau tidak bisa membuka link ini.</string>
+    <string name="kualitas">Kualitas</string>
+    <string name="rotasi">Rotasi</string>
+    <string name="ukuran">Ukuran</string>
+    <string name="otomatis">Otomatis</string>
+    <string name="sumber_lain">Sumber lain</string>
+    <string name="tidak_ada_kualitas">Tidak ada pilihan kualitas lain.</string>
+    <string-array name="orientasi">
+        <item>Otomatis (ikut sensor)</item>
         <item>Landscape</item>
         <item>Portrait</item>
-        <item>Ikuti sensor (abaikan kunci rotasi)</item>
     </string-array>
-    <string-array name="ukuran_opsi">
-        <item>Penuhi layar, potong tepi (Zoom)</item>
-        <item>Penuhi layar, regangkan (Fill)</item>
-        <item>Muat utuh, ada bar hitam (Fit)</item>
-        <item>Lebar penuh</item>
-        <item>Tinggi penuh</item>
+    <string-array name="resize_modes">
+        <item>Sesuai rasio (Fit)</item>
+        <item>Isi lebar</item>
+        <item>Isi tinggi</item>
+        <item>Isi layar, diregangkan (Fill)</item>
+        <item>Isi layar, terpotong (Zoom)</item>
+    </string-array>
+    <string name="cd_tutup">Tutup</string>
+    <string name="cd_kunci">Kunci layar</string>
+    <string name="cd_buka_kunci">Buka kunci layar</string>
+    <string name="cd_bisu">Bisukan / suarakan</string>
+    <string name="cd_pip">Gambar dalam gambar</string>
+    <string name="cd_pengaturan">Pengaturan (kecepatan, audio)</string>
+    <string-array name="resize_short">
+        <item>Fit</item>
+        <item>Lebar</item>
+        <item>Tinggi</item>
+        <item>Fill</item>
+        <item>Zoom</item>
     </string-array>
     <string-array name="platforms">
         <item>1) YouTube</item>

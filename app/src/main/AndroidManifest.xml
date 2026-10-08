@@ -3,7 +3,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Supaya aplikasi Leone terlihat (Android 11+) -->
     <queries>
         <package android:name="com.genuine.leone" />
     </queries>
@@ -34,6 +33,7 @@
         <activity
             android:name=".PlayerActivity"
             android:exported="false"
+            android:supportsPictureInPicture="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:theme="@style/PlayerTheme" />
     </application>

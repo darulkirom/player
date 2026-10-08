@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <FrameLayout
+        android:id="@+id/exo_controls_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#40000000"
+        android:layoutDirection="ltr">
+
+        <!-- Atas: tutup, judul, kunci -->
+        <LinearLayout
+            android:id="@+id/top_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:background="@drawable/bg_gradient_top"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <ImageButton
+                android:id="@+id/back_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_tutup"
+                android:padding="8dp"
+                android:src="@drawable/ic_close" />
+
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:fadingEdge="horizontal"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/lock_player"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_kunci"
+                android:padding="8dp"
+                android:src="@drawable/ic_lock" />
+        </LinearLayout>
+
+        <!-- Tengah: mundur, putar/jeda, maju -->
+        <LinearLayout
+            android:id="@+id/exo_center_controls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clipToPadding="false"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/exo_rew_with_amount"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:background="@drawable/ic_replay"
+                android:includeFontPadding="false"
+                android:paddingTop="4dp"
+                android:stateListAnimator="@null"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/exo_play_pause"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:padding="14dp"
+                android:scaleType="fitCenter" />
+
+            <Button
+                android:id="@+id/exo_ffwd_with_amount"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:background="@drawable/ic_forward"
+                android:includeFontPadding="false"
+                android:paddingTop="4dp"
+                android:stateListAnimator="@null"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Bawah: seekbar + waktu + tombol -->
+        <LinearLayout
+            android:id="@+id/bottom_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_gradient_bottom"
+            android:orientation="vertical">
+
+            <androidx.media3.ui.DefaultTimeBar
+                android:id="@+id/exo_progress"
+                android:layout_width="match_parent"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                app:bar_height="3dp"
+                app:buffered_color="#66FFFFFF"
+                app:played_color="#FF5252"
+                app:scrubber_color="#FF5252"
+                app:scrubber_dragged_size="20dp"
+                app:scrubber_enabled_size="12dp"
+                app:touch_target_height="28dp"
+                app:unplayed_color="#33FFFFFF" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="4dp">
+
+                <TextView
+                    android:id="@+id/exo_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text=" / "
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/exo_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="12sp" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/resizeTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="40dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btn_mute"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_bisu"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_volume_up" />
+
+                <TextView
+                    android:id="@+id/btn_quality"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="40dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/kualitas"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btn_rotate"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/rotasi"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_screen_rotation" />
+
+                <ImageButton
+                    android:id="@+id/btn_pip"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_pip"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_pip" />
+
+                <ImageButton
+                    android:id="@+id/exo_settings"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_pengaturan"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_settings" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</merge>
