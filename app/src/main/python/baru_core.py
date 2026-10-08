@@ -296,22 +296,20 @@ def _build(c, platform):
 
 # ---------------------------------------------------------- API untuk Java
 
-def analyze(url, platform, files_dir, js_path):
+def analyze(url, platform, cookie_dir, legacy_dir, js_path):
     """Return JSON string: {ok, title, options[]} atau {ok:false, need_cookie, site, error}."""
     try:
-        return _analyze(url, platform, files_dir, js_path)
+        return _analyze(url, platform, cookie_dir, legacy_dir, js_path)
     except BaseException:
         # jangan lempar exception mentah ke Java; kirim traceback sebagai teks
         return json.dumps({"ok": False, "need_cookie": False, "site": "",
                            "error": traceback.format_exc()[-1800:]})
 
 
-def _analyze(url, platform, files_dir, js_path):
+def _analyze(url, platform, cookie_dir, legacy_dir, js_path):
     url = (url or "").strip()
     site = _site(url)
-    cookie_dir = os.path.join(files_dir, "cookies")
-    os.makedirs(cookie_dir, exist_ok=True)
-    cf = os.path.join(cookie_dir, site + ".txt")
+    cf = _cookie_path(cookie_dir, legacy_dir, site)
 
     d, err = None, ""
 
@@ -351,7 +349,22 @@ def _analyze(url, platform, files_dir, js_path):
     })
 
 
-def save_cookie(files_dir, site, text):
+def _cookie_path(cookie_dir, legacy_dir, site):
+    """Path cookie untuk situs; salin dari folder lama (internal) kalau baru pindah lokasi."""
+    os.makedirs(cookie_dir, exist_ok=True)
+    cf = os.path.join(cookie_dir, site + ".txt")
+    old = os.path.join(legacy_dir or "", site + ".txt")
+    if (not os.path.isfile(cf)) and legacy_dir and os.path.isfile(old) \
+            and os.path.abspath(old) != os.path.abspath(cf):
+        try:
+            with open(old, "rb") as src, open(cf, "wb") as dst:
+                dst.write(src.read())
+        except OSError:
+            pass
+    return cf
+
+
+def save_cookie(cookie_dir, site, text):
     """Simpan cookies.txt (format Netscape) untuk situs tertentu."""
     text = (text or "").lstrip("\ufeff \r\n\t")
     first = text.splitlines()[0] if text else ""
@@ -360,7 +373,6 @@ def save_cookie(files_dir, site, text):
             "ok": False,
             "error": "Isinya bukan cookies.txt. Baris pertama harus: "
                      "# Netscape HTTP Cookie File"})
-    cookie_dir = os.path.join(files_dir, "cookies")
     os.makedirs(cookie_dir, exist_ok=True)
     path = os.path.join(cookie_dir, site + ".txt")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:

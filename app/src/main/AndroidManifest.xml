@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Simpan cookie di /Documents/BaruPlayer/cookies (opsional, diminta dari layar utama) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
 
     <queries>
         <package android:name="com.genuine.leone" />
@@ -10,6 +15,7 @@
     <application
         android:name="com.chaquo.python.android.PyApplication"
         android:allowBackup="true"
+        android:requestLegacyExternalStorage="true"
         android:icon="@android:drawable/ic_media_play"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">

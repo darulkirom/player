@@ -55,6 +55,8 @@
         <item>Fill</item>
         <item>Zoom</item>
     </string-array>
+    <string name="lokasi_cookie">Lokasi cookie: %1$s</string>
+    <string name="simpan_di_dokumen">Simpan cookie di folder Dokumen</string>
     <string-array name="platforms">
         <item>1) YouTube</item>
         <item>2) Facebook</item>

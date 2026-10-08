@@ -1,11 +1,16 @@
 package com.baru.player;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Patterns;
 import android.view.View;
@@ -52,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private Button btnGo;
     private ProgressBar progress;
     private TextView tvStatus;
+    private TextView tvCookieLoc;
+    private Button btnStorage;
     private ArrayAdapter<String> listAdapter;
     private String videoTitle = "";
 
@@ -65,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
         btnGo = findViewById(R.id.btn_go);
         progress = findViewById(R.id.progress);
         tvStatus = findViewById(R.id.tv_status);
+        tvCookieLoc = findViewById(R.id.tv_cookie_loc);
+        btnStorage = findViewById(R.id.btn_storage);
+        btnStorage.setOnClickListener(v -> requestStorage());
         ListView lv = findViewById(R.id.lv_options);
 
         ArrayAdapter<CharSequence> pa = ArrayAdapter.createFromResource(
@@ -88,6 +98,18 @@ public class MainActivity extends AppCompatActivity {
         btnGo.setOnClickListener(v -> startAnalyze());
 
         handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshStorageUi(); // setelah kembali dari layar izin
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        refreshStorageUi();
     }
 
     @Override
@@ -125,6 +147,51 @@ public class MainActivity extends AppCompatActivity {
             return t == null ? "" : t.toString();
         }
         return "";
+    }
+
+    // -------------------------------------------------- lokasi cookie
+
+    private boolean hasStorageAccess() {
+        if (Build.VERSION.SDK_INT >= 30) return Environment.isExternalStorageManager();
+        if (Build.VERSION.SDK_INT >= 23) {
+            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    /** Folder lama (internal, privat). Dipakai sebagai cadangan dan sumber migrasi. */
+    private File legacyCookieDir() {
+        return new File(getFilesDir(), "cookies");
+    }
+
+    /** /Documents/BaruPlayer/cookies kalau izin ada, kalau tidak folder internal. */
+    @SuppressWarnings("deprecation")
+    private File cookieDir() {
+        if (hasStorageAccess()) {
+            File d = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOCUMENTS), "BaruPlayer/cookies");
+            if (d.isDirectory() || d.mkdirs()) return d;
+        }
+        return legacyCookieDir();
+    }
+
+    private void refreshStorageUi() {
+        tvCookieLoc.setText(getString(R.string.lokasi_cookie, cookieDir().getAbsolutePath()));
+        btnStorage.setVisibility(hasStorageAccess() ? View.GONE : View.VISIBLE);
+    }
+
+    private void requestStorage() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                        Uri.parse("package:" + getPackageName())));
+            } catch (ActivityNotFoundException e) {
+                startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+            }
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
     }
 
     /** Binary QuickJS opsional (untuk YouTube). Kosong kalau tidak disertakan. */
@@ -166,11 +233,13 @@ public class MainActivity extends AppCompatActivity {
         listAdapter.notifyDataSetChanged();
         setBusy(true, getString(R.string.mengambil_info));
 
+        final String cDir = cookieDir().getAbsolutePath();
+        final String lDir = legacyCookieDir().getAbsolutePath();
+        final String js = jsRuntimePath();
         io.execute(() -> {
             String json;
             try {
-                json = callPython("analyze", url, platform,
-                        getFilesDir().getAbsolutePath(), jsRuntimePath());
+                json = callPython("analyze", url, platform, cDir, lDir, js);
             } catch (Throwable t) {
                 json = errorJson(t);
             }
@@ -233,10 +302,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveCookie(final String site, final String text) {
         setBusy(true, "");
+        final String cDir = cookieDir().getAbsolutePath();
         io.execute(() -> {
             String json;
             try {
-                json = callPython("save_cookie", getFilesDir().getAbsolutePath(), site, text);
+                json = callPython("save_cookie", cDir, site, text);
             } catch (Throwable t) {
                 json = errorJson(t);
             }
