@@ -14,6 +14,22 @@
     <string name="cookie_tersimpan">Cookie disimpan.</string>
     <string name="gagal_putar">Gagal memutar: %1$s</string>
     <string name="opsi_tidak_valid">Pilihan tidak valid.</string>
+    <string name="petunjuk">Ketuk: buka di aplikasi pemutar · Tahan: salin link</string>
+    <string name="pilih_pemutar">Pilih pemutar</string>
+    <string name="player_bawaan">Player bawaan</string>
+    <string name="genuine_player">com.genuine.leone</string>
+    <string name="genuine_tidak_ada">Aplikasi com.genuine.leone tidak terpasang.</string>
+    <string name="pilih_resolusi">Pilih resolusi</string>
+    <string name="resolusi_tidak_tersedia">Resolusi video tidak tersedia.</string>
+    <string name="pilih_orientasi">Pilih orientasi</string>
+    <string name="orientasi_sensor">Sensor otomatis</string>
+    <string name="orientasi_portrait">Portrait</string>
+    <string name="orientasi_landscape">Landscape</string>
+    <string name="buka_dengan">Buka dengan</string>
+    <string name="tidak_ada_player">Tidak ada aplikasi pemutar yang bisa membuka link ini.</string>
+    <string name="link_disalin">Link disalin.</string>
+    <string name="tidak_bisa_salin">Video dan audio terpisah, tidak bisa disalin sebagai satu link. Ketuk untuk memutar di pemutar bawaan.</string>
+    <string name="server_gagal">Gagal menyiapkan link lokal (port 8765 mungkin dipakai aplikasi lain).</string>
     <string-array name="platforms">
         <item>1) YouTube</item>
         <item>2) Facebook</item>

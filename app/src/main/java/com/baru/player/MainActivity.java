@@ -1,8 +1,11 @@
 package com.baru.player;
 
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Patterns;
@@ -25,6 +28,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -66,6 +75,10 @@ public class MainActivity extends AppCompatActivity {
         listAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, labels);
         lv.setAdapter(listAdapter);
         lv.setOnItemClickListener((parent, view, pos, id) -> play(pos));
+        lv.setOnItemLongClickListener((parent, view, pos, id) -> {
+            copyLink(pos);
+            return true;
+        });
 
         findViewById(R.id.btn_paste).setOnClickListener(v -> {
             String t = clipboardText();
@@ -178,7 +191,8 @@ public class MainActivity extends AppCompatActivity {
                     labels.add(o.optString("label", "?"));
                 }
                 listAdapter.notifyDataSetChanged();
-                tvStatus.setText(videoTitle + "\n(yt-dlp " + r.optString("ytdlp") + ")");
+                tvStatus.setText(videoTitle + "\n(yt-dlp " + r.optString("ytdlp") + ")\n"
+                        + getString(R.string.petunjuk));
             } else if (r.optBoolean("need_cookie")) {
                 showCookieDialog(r.optString("site", "lain"), r.optString("error"));
             } else {
@@ -253,9 +267,134 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.opsi_tidak_valid, Toast.LENGTH_SHORT).show();
             return;
         }
+
+        final JSONObject o = options.get(pos);
+        final String[] choices = {
+                getString(R.string.player_bawaan),
+                getString(R.string.genuine_player)
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.pilih_pemutar)
+                .setItems(choices, (dialog, which) -> {
+                    if (which == 0) {
+                        openBuiltinPlayer(o);
+                    } else {
+                        openGenuinePlayer(o);
+                    }
+                })
+                .setNegativeButton(R.string.batal, null)
+                .show();
+    }
+
+    private void openBuiltinPlayer(JSONObject o) {
         Intent i = new Intent(this, PlayerActivity.class);
-        i.putExtra(PlayerActivity.EXTRA_OPTION, options.get(pos).toString());
+        i.putExtra(PlayerActivity.EXTRA_OPTION, o.toString());
         i.putExtra(PlayerActivity.EXTRA_TITLE, videoTitle);
         startActivity(i);
+    }
+
+    /**
+     * Buka langsung aplikasi com.genuine.leone.
+     * Tidak memakai chooser Android, jadi targetnya benar-benar aplikasi tersebut.
+     */
+    private void openGenuinePlayer(JSONObject o) {
+        String url = streamUrl(o);
+        if (url == null) {
+            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setPackage("com.genuine.leone");
+        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
+        i.putExtra("title", videoTitle);
+
+        String[] h = headerArray(o.optJSONObject("headers"));
+        if (h.length > 0) {
+            i.putExtra("headers", h);
+        }
+
+        try {
+            startActivity(i);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.genuine_tidak_ada, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Link yang dikirim ke pemutar. Untuk hls_split: master .m3u8 lokal. */
+    private String streamUrl(JSONObject o) {
+        if ("hls_split".equals(o.optString("kind"))) {
+            File dir = new File(getFilesDir(), "streams");
+            if (!dir.isDirectory() && !dir.mkdirs()) return null;
+            try (Writer w = new OutputStreamWriter(
+                    new FileOutputStream(new File(dir, "master.m3u8")), StandardCharsets.UTF_8)) {
+                w.write(o.optString("master_text"));
+            } catch (IOException e) {
+                return null;
+            }
+            if (!LocalServer.ensureStarted(dir)) return null;
+            return "http://127.0.0.1:" + LocalServer.PORT + "/master.m3u8";
+        }
+        String u = o.optString("url", "");
+        return u.isEmpty() ? null : u;
+    }
+
+    private static String mimeFor(String kind) {
+        switch (kind) {
+            case "hls":
+            case "hls_master":
+            case "hls_split":
+                return "application/x-mpegURL";
+            case "dash":
+                return "application/dash+xml";
+            default:
+                return "video/*";
+        }
+    }
+
+    private static String[] headerArray(JSONObject h) {
+        List<String> l = new ArrayList<>();
+        if (h != null) {
+            Iterator<String> it = h.keys();
+            while (it.hasNext()) {
+                String k = it.next();
+                l.add(k);
+                l.add(h.optString(k));
+            }
+        }
+        return l.toArray(new String[0]);
+    }
+
+    private void openExternal(String url, JSONObject o) {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setDataAndType(Uri.parse(url), mimeFor(o.optString("kind")));
+        i.putExtra("title", videoTitle);
+        String[] h = headerArray(o.optJSONObject("headers"));
+        if (h.length > 0) i.putExtra("headers", h); // dibaca MX Player; app lain mengabaikan
+        try {
+            startActivity(Intent.createChooser(i, getString(R.string.buka_dengan)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.tidak_ada_player, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void copyLink(int pos) {
+        if (pos < 0 || pos >= options.size()) return;
+        JSONObject o = options.get(pos);
+        if ("merge".equals(o.optString("kind"))) {
+            Toast.makeText(this, R.string.tidak_bisa_salin, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String url = streamUrl(o);
+        if (url == null) {
+            Toast.makeText(this, R.string.server_gagal, Toast.LENGTH_LONG).show();
+            return;
+        }
+        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("link", url));
+            Toast.makeText(this, R.string.link_disalin, Toast.LENGTH_SHORT).show();
+        }
     }
 }
