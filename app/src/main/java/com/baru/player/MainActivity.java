@@ -1,6 +1,5 @@
 package com.baru.player;
 
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -19,9 +18,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.chaquo.python.Python;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -135,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
     // --------------------------------------------------------------- python
 
     private String callPython(String fn, Object... args) {
-        return Python.getInstance().getModule("extractor").callAttr(fn, args).toString();
+        return Python.getInstance().getModule("baru_core").callAttr(fn, args).toString();
     }
 
     private static String errorJson(Throwable t) {
@@ -206,12 +207,8 @@ public class MainActivity extends AppCompatActivity {
     // --------------------------------------------------------------- cookie
 
     private void showCookieDialog(final String site, String error) {
-        final EditText et = new EditText(this);
-        et.setHint(R.string.cookie_hint);
-        et.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        et.setMinLines(5);
-        et.setMaxLines(10);
-        et.setHorizontallyScrolling(false);
+        View content = getLayoutInflater().inflate(R.layout.dialog_cookie, null);
+        final EditText et = content.findViewById(R.id.et_cookie);
 
         String clip = clipboardText();
         if (clip.toLowerCase().contains("cookie file")) et.setText(clip);
@@ -219,11 +216,12 @@ public class MainActivity extends AppCompatActivity {
         String msg = (error == null || error.isEmpty() ? "" : error + "\n\n")
                 + getString(R.string.cookie_pesan);
 
-        AlertDialog dlg = new AlertDialog.Builder(this)
+        AlertDialog dlg = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.cookie_judul)
                 .setMessage(msg)
-                .setView(et)
-                .setPositiveButton(R.string.cookie_simpan, (d, w) -> saveCookie(site, et.getText().toString()))
+                .setView(content)
+                .setPositiveButton(R.string.cookie_simpan,
+                        (d, w) -> saveCookie(site, et.getText().toString()))
                 .setNeutralButton(R.string.tempel, null)
                 .setNegativeButton(R.string.batal, null)
                 .create();
@@ -277,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.buka_di)
                 .setItems(new String[]{
                         getString(R.string.buka_leone),

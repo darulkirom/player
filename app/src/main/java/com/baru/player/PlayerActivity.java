@@ -1,6 +1,5 @@
 package com.baru.player;
 
-import android.app.AlertDialog;
 import android.app.PictureInPictureParams;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -8,14 +7,20 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Rational;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +52,8 @@ import androidx.media3.exoplayer.source.MergingMediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -97,6 +104,21 @@ public class PlayerActivity extends AppCompatActivity {
     private final Runnable hideUnlock = () -> unlockBtn.setVisibility(View.GONE);
     private boolean locked;
     private boolean muted;
+
+    // gesture volume / kecerahan
+    private View gestureIndicator;
+    private ImageView gestureIcon;
+    private ProgressBar gestureBar;
+    private TextView gestureText;
+    private AudioManager audio;
+    private final Runnable hideIndicator = () -> gestureIndicator.setVisibility(View.GONE);
+    private float gStartX;
+    private float gStartY;
+    private int gMode;          // 0 belum ditentukan, 1 kecerahan, 2 volume, -1 diabaikan
+    private boolean gActive;
+    private float gStartBrightness;
+    private int gStartVolume;
+    private int gMaxVolume = 1;
     private ExoPlayer player;
     private SharedPreferences prefs;
 
@@ -120,6 +142,10 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView = findViewById(R.id.player_view);
         lockLayer = findViewById(R.id.lock_layer);
+        gestureIndicator = findViewById(R.id.gesture_indicator);
+        gestureIcon = findViewById(R.id.gesture_icon);
+        gestureBar = findViewById(R.id.gesture_bar);
+        gestureText = findViewById(R.id.gesture_text);
         unlockBtn = findViewById(R.id.btn_unlock);
         // tampilan kontrol (player_controls.xml) ada di dalam PlayerView
         View topControls = playerView.findViewById(R.id.top_controls);
@@ -165,6 +191,7 @@ public class PlayerActivity extends AppCompatActivity {
         padWithInsets(topControls, true, false);
         padWithInsets(bottomWrapper, false, true);
         padWithInsets(lockLayer, true, false);
+        setupGestures();
 
         applyFullscreen();
         applyResize();
@@ -181,6 +208,7 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         handler.removeCallbacks(hideUnlock);
+        handler.removeCallbacks(hideIndicator);
         releasePlayer();
     }
 
@@ -222,7 +250,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void showResizeDialog() {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.ukuran)
                 .setSingleChoiceItems(R.array.resize_modes, resizeIdx, (d, which) -> {
                     resizeIdx = which;
@@ -234,7 +262,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void showOrientationDialog() {
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.rotasi)
                 .setSingleChoiceItems(R.array.orientasi, orientIdx, (d, which) -> {
                     orientIdx = which;
@@ -243,6 +271,103 @@ public class PlayerActivity extends AppCompatActivity {
                     d.dismiss();
                 })
                 .show();
+    }
+
+    // ------------------------------------------- gesture volume & kecerahan
+
+    /**
+     * Geser vertikal di setengah kiri layar = kecerahan, setengah kanan = volume.
+     * Ketukan biasa tetap menampilkan/menyembunyikan kontrol.
+     */
+    private void setupGestures() {
+        audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+        final int slop = ViewConfiguration.get(this).getScaledTouchSlop();
+        final float edge = 32 * getResources().getDisplayMetrics().density; // zona gesture sistem
+
+        playerView.setOnTouchListener((v, e) -> {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    gStartX = e.getX();
+                    gStartY = e.getY();
+                    gActive = false;
+                    gMode = (gStartX < edge || gStartX > v.getWidth() - edge) ? -1 : 0;
+                    return false; // biarkan PlayerView mencatat sentuhan (untuk ketukan)
+
+                case MotionEvent.ACTION_MOVE: {
+                    if (gMode == -1 || e.getPointerCount() > 1) return gActive;
+                    float dx = e.getX() - gStartX;
+                    float dy = e.getY() - gStartY;
+                    if (!gActive) {
+                        if (Math.abs(dy) > slop && Math.abs(dy) > Math.abs(dx) * 1.5f) {
+                            gActive = true;
+                            gMode = gStartX < v.getWidth() / 2f ? 1 : 2;
+                            beginGesture();
+                        } else {
+                            return false;
+                        }
+                    }
+                    updateGesture(-dy / v.getHeight());
+                    return true;
+                }
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL: {
+                    boolean was = gActive;
+                    gActive = false;
+                    gMode = 0;
+                    if (was) {
+                        handler.removeCallbacks(hideIndicator);
+                        handler.postDelayed(hideIndicator, 600);
+                    }
+                    return was; // kalau tadi geser, jangan dihitung sebagai ketukan
+                }
+                default:
+                    return false;
+            }
+        });
+    }
+
+    private void beginGesture() {
+        if (gMode == 1) {
+            float cur = getWindow().getAttributes().screenBrightness;
+            if (cur < 0) { // masih ikut sistem: baca kecerahan sistem
+                try {
+                    cur = Settings.System.getInt(getContentResolver(),
+                            Settings.System.SCREEN_BRIGHTNESS) / 255f;
+                } catch (Settings.SettingNotFoundException ex) {
+                    cur = 0.5f;
+                }
+            }
+            gStartBrightness = cur;
+        } else {
+            gMaxVolume = Math.max(1, audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+            gStartVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+            if (muted) toggleMute(); // menggeser volume = suarakan lagi
+        }
+    }
+
+    private void updateGesture(float delta) {
+        if (gMode == 1) {
+            float b = Math.max(0.02f, Math.min(1f, gStartBrightness + delta));
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.screenBrightness = b;
+            getWindow().setAttributes(lp);
+            showIndicator(R.drawable.ic_brightness, Math.round(b * 100));
+        } else if (gMode == 2) {
+            float vf = Math.max(0f, Math.min(gMaxVolume, gStartVolume + delta * gMaxVolume));
+            int idx = Math.round(vf);
+            audio.setStreamVolume(AudioManager.STREAM_MUSIC, idx, 0);
+            showIndicator(idx == 0 ? R.drawable.ic_volume_off : R.drawable.ic_volume_up,
+                    Math.round(idx * 100f / gMaxVolume));
+        }
+    }
+
+    private void showIndicator(int iconRes, int percent) {
+        gestureIcon.setImageResource(iconRes);
+        gestureBar.setProgress(percent);
+        gestureText.setText(percent + "%");
+        gestureIndicator.setVisibility(View.VISIBLE);
+        handler.removeCallbacks(hideIndicator);
     }
 
     // ------------------------------------------------- kunci / bisu / PiP / insets
@@ -390,7 +515,7 @@ public class PlayerActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.tidak_ada_kualitas, Toast.LENGTH_SHORT).show();
             return;
         }
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.kualitas)
                 .setItems(labels.toArray(new String[0]), (d, which) -> actions.get(which).run())
                 .show();
