@@ -176,20 +176,21 @@ public class MainActivity extends AppCompatActivity {
         return new File(getFilesDir(), "cookies");
     }
 
-    /** /Documents/BaruPlayer/cookies kalau izin ada, kalau tidak folder internal. */
-    @SuppressWarnings("deprecation")
+    /**
+     * Folder cookie utama: selalu privat internal aplikasi, seperti baru.sh
+     * menulis ke folder "cookies" lokalnya sendiri. Tidak butuh izin apa pun,
+     * jadi baca/tulis cookie selalu berhasil di semua versi Android.
+     */
     private File cookieDir() {
-        if (hasStorageAccess()) {
-            File d = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOCUMENTS), "BaruPlayer/cookies");
-            if (d.isDirectory() || d.mkdirs()) return d;
-        }
-        return legacyCookieDir();
+        File d = legacyCookieDir();
+        d.mkdirs();
+        return d;
     }
 
     private void refreshStorageUi() {
         tvCookieLoc.setText(getString(R.string.lokasi_cookie, cookieDir().getAbsolutePath()));
-        btnStorage.setVisibility(hasStorageAccess() ? View.GONE : View.VISIBLE);
+        // Cookie disimpan di folder internal privat, tidak butuh izin apa pun lagi.
+        btnStorage.setVisibility(View.GONE);
     }
 
     private void requestStorage() {
