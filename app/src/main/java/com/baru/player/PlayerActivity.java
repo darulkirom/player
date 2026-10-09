@@ -334,10 +334,12 @@ public class PlayerActivity extends AppCompatActivity {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL: {
                     boolean was = gActive;
+                    int finishedMode = gMode;
                     gActive = false;
                     gMode = 0;
                     if (was) {
-                        if (gMode == 3 && player != null && gSeekDuration > 0) {
+                        if (e.getActionMasked() == MotionEvent.ACTION_UP
+                                && finishedMode == 3 && player != null && gSeekDuration > 0) {
                             player.seekTo(Math.max(0L, Math.min(gPreviewPosition, gSeekDuration)));
                         }
                         handler.removeCallbacks(hideIndicator);
@@ -620,9 +622,17 @@ public class PlayerActivity extends AppCompatActivity {
 
                 @Override
                 public void onPlayerError(PlaybackException error) {
+                    String detail = error.getErrorCodeName();
+                    Throwable cause = error;
+                    for (int depth = 0; depth < 6 && cause != null; depth++, cause = cause.getCause()) {
+                        String message = cause.getMessage();
+                        if (message != null && !message.trim().isEmpty()) {
+                            detail += "\n" + message;
+                            break;
+                        }
+                    }
                     Toast.makeText(PlayerActivity.this,
-                            getString(R.string.gagal_putar, error.getErrorCodeName()),
-                            Toast.LENGTH_LONG).show();
+                            getString(R.string.gagal_putar, detail), Toast.LENGTH_LONG).show();
                 }
             });
             if (resumePos > 0) player.setMediaSource(source, resumePos);
