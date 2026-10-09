@@ -57,6 +57,17 @@
     </string-array>
     <string name="lokasi_cookie">Lokasi cookie: %1$s</string>
     <string name="simpan_di_dokumen">Simpan cookie di folder Dokumen</string>
+    <string name="masuk_browser">Masuk lewat browser (buat cookie otomatis)</string>
+    <string name="login_petunjuk">Masuk ke akunmu, lalu ketuk Selesai.</string>
+    <string name="selesai">Selesai</string>
+    <string name="login_belum">Belum ada cookie. Masuk dulu, lalu ketuk Selesai.</string>
+    <string name="login_gagal_simpan">Gagal menyimpan cookie.</string>
+    <string name="kelola_cookie">Kelola cookie</string>
+    <string name="tempel_clipboard">Tempel dari clipboard (seperti Termux)</string>
+    <string name="hapus_file">Hapus file cookie</string>
+    <string name="clipboard_kosong">Clipboard kosong. Salin isi cookies.txt dulu.</string>
+    <string name="cookie_dihapus">Cookie dihapus.</string>
+    <string name="cookie_tersimpan_di">Tersimpan: %1$s (%2$d byte)</string>
     <string-array name="platforms">
         <item>1) YouTube</item>
         <item>2) Facebook</item>

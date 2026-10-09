@@ -37,6 +37,10 @@
         </activity>
 
         <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".PlayerActivity"
             android:exported="false"
             android:supportsPictureInPicture="true"

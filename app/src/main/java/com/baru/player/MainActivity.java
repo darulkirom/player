@@ -23,6 +23,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -49,6 +51,13 @@ import java.util.regex.Matcher;
 public class MainActivity extends AppCompatActivity {
 
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ActivityResultLauncher<Intent> loginLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Toast.makeText(this, R.string.cookie_tersimpan, Toast.LENGTH_SHORT).show();
+                    startAnalyze(); // coba lagi dengan cookie hasil login
+                }
+            });
     private final List<JSONObject> options = new ArrayList<>();
     private final List<String> labels = new ArrayList<>();
 
@@ -66,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Ui.applySystemBarPadding(findViewById(R.id.root));
 
         spPlatform = findViewById(R.id.sp_platform);
         etUrl = findViewById(R.id.et_url);
@@ -75,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         tvCookieLoc = findViewById(R.id.tv_cookie_loc);
         btnStorage = findViewById(R.id.btn_storage);
         btnStorage.setOnClickListener(v -> requestStorage());
+        findViewById(R.id.btn_cookies).setOnClickListener(v -> showCookieManager());
         ListView lv = findViewById(R.id.lv_options);
 
         ArrayAdapter<CharSequence> pa = ArrayAdapter.createFromResource(
@@ -278,6 +289,16 @@ public class MainActivity extends AppCompatActivity {
     private void showCookieDialog(final String site, String error) {
         View content = getLayoutInflater().inflate(R.layout.dialog_cookie, null);
         final EditText et = content.findViewById(R.id.et_cookie);
+        final AlertDialog[] ref = new AlertDialog[1];
+        Button login = content.findViewById(R.id.btn_login);
+        if (LoginActivity.supports(site)) {
+            login.setOnClickListener(v -> {
+                if (ref[0] != null) ref[0].dismiss();
+                openLogin(site);
+            });
+        } else {
+            login.setVisibility(View.GONE); // YouTube/Google menolak login lewat WebView
+        }
 
         String clip = clipboardText();
         if (clip.toLowerCase().contains("cookie file")) et.setText(clip);
@@ -290,17 +311,25 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage(msg)
                 .setView(content)
                 .setPositiveButton(R.string.cookie_simpan,
-                        (d, w) -> saveCookie(site, et.getText().toString()))
+                        (d, w) -> saveCookie(site, et.getText().toString(), true))
                 .setNeutralButton(R.string.tempel, null)
                 .setNegativeButton(R.string.batal, null)
                 .create();
+        ref[0] = dlg;
         dlg.show();
         // supaya tombol "Tempel" tidak menutup dialog
         dlg.getButton(AlertDialog.BUTTON_NEUTRAL)
                 .setOnClickListener(v -> et.setText(clipboardText()));
     }
 
-    private void saveCookie(final String site, final String text) {
+    private void openLogin(String site) {
+        Intent i = new Intent(this, LoginActivity.class);
+        i.putExtra(LoginActivity.EXTRA_SITE, site);
+        i.putExtra(LoginActivity.EXTRA_COOKIE_DIR, cookieDir().getAbsolutePath());
+        loginLauncher.launch(i);
+    }
+
+    private void saveCookie(final String site, final String text, final boolean retry) {
         setBusy(true, "");
         final String cDir = cookieDir().getAbsolutePath();
         io.execute(() -> {
@@ -316,16 +345,78 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     JSONObject r = new JSONObject(res);
                     if (r.optBoolean("ok")) {
-                        Toast.makeText(this, R.string.cookie_tersimpan, Toast.LENGTH_SHORT).show();
-                        startAnalyze(); // coba lagi dengan cookie baru
+                        String msg = getString(R.string.cookie_tersimpan_di,
+                                r.optString("path"), r.optInt("bytes"));
+                        tvStatus.setText(msg);
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                        if (retry) startAnalyze(); // coba lagi dengan cookie baru
                     } else {
-                        tvStatus.setText(r.optString("error"));
+                        String err = r.optString("error");
+                        tvStatus.setText(err);
+                        Toast.makeText(this, err, Toast.LENGTH_LONG).show();
                     }
                 } catch (JSONException e) {
                     tvStatus.setText(e.toString());
                 }
             });
         });
+    }
+
+    // ---------------------------------------------------- kelola cookie
+
+    private static final String[] SITES = {
+            "youtube", "facebook", "instagram", "tiktok", "twitter", "twitch", "lain"
+    };
+
+    private void showCookieManager() {
+        final File dir = cookieDir();
+        String[] labels = new String[SITES.length];
+        for (int i = 0; i < SITES.length; i++) {
+            File f = new File(dir, SITES[i] + ".txt");
+            labels[i] = SITES[i] + (f.isFile() && f.length() > 0
+                    ? "   ✓ " + f.length() + " B" : "   (belum ada)");
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.kelola_cookie)
+                .setItems(labels, (d, which) -> showCookieActions(SITES[which]))
+                .setNegativeButton(R.string.batal, null)
+                .show();
+    }
+
+    private void showCookieActions(final String site) {
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> actions = new ArrayList<>();
+
+        labels.add(getString(R.string.tempel_clipboard));
+        actions.add(() -> {
+            String t = clipboardText();
+            if (t.trim().isEmpty()) {
+                Toast.makeText(this, R.string.clipboard_kosong, Toast.LENGTH_LONG).show();
+            } else {
+                saveCookie(site, t, false);
+            }
+        });
+
+        if (LoginActivity.supports(site)) {
+            labels.add(getString(R.string.masuk_browser));
+            actions.add(() -> openLogin(site));
+        }
+
+        final File f = new File(cookieDir(), site + ".txt");
+        if (f.isFile()) {
+            labels.add(getString(R.string.hapus_file));
+            actions.add(() -> {
+                if (f.delete()) {
+                    Toast.makeText(this, R.string.cookie_dihapus, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(site)
+                .setItems(labels.toArray(new String[0]), (d, which) -> actions.get(which).run())
+                .setNegativeButton(R.string.batal, null)
+                .show();
     }
 
     // --------------------------------------------------------------- putar

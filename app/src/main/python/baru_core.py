@@ -365,20 +365,26 @@ def _cookie_path(cookie_dir, legacy_dir, site):
 
 
 def save_cookie(cookie_dir, site, text):
-    """Simpan cookies.txt (format Netscape) untuk situs tertentu."""
+    """Tulis cookies.txt (format Netscape) ke <cookie_dir>/<site>.txt, seperti baru.sh."""
     text = (text or "").lstrip("\ufeff \r\n\t")
     first = text.splitlines()[0] if text else ""
     if "cookie file" not in first.lower():
         return json.dumps({
             "ok": False,
             "error": "Isinya bukan cookies.txt. Baris pertama harus: "
-                     "# Netscape HTTP Cookie File"})
-    os.makedirs(cookie_dir, exist_ok=True)
+                     "# Netscape HTTP Cookie File\n(baris pertama yang terbaca: \"%s\")"
+                     % first[:50]})
     path = os.path.join(cookie_dir, site + ".txt")
-    with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text.replace("\r\n", "\n").rstrip("\n") + "\n")
+    try:
+        os.makedirs(cookie_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text.replace("\r\n", "\n").rstrip("\n") + "\n")
+        size = os.path.getsize(path)
+    except OSError as e:
+        return json.dumps({"ok": False,
+                           "error": "Gagal menulis %s\n%s" % (path, e)})
     try:
         os.chmod(path, 0o600)
     except Exception:
         pass
-    return json.dumps({"ok": True})
+    return json.dumps({"ok": True, "path": path, "bytes": size})
