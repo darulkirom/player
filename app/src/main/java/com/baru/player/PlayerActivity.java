@@ -110,6 +110,7 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageView gestureIcon;
     private ImageView gestureSeekIcon;
     private View gestureCircle;
+    private GestureRingView gestureRing;
     private View gestureSeekInfo;
     private ProgressBar gestureBar;
     private TextView gestureText;
@@ -152,6 +153,7 @@ public class PlayerActivity extends AppCompatActivity {
         gestureIcon = findViewById(R.id.gesture_icon);
         gestureSeekIcon = findViewById(R.id.gesture_seek_icon);
         gestureCircle = findViewById(R.id.gesture_circle);
+        gestureRing = findViewById(R.id.gesture_ring);
         gestureSeekInfo = findViewById(R.id.gesture_seek_info);
         gestureBar = findViewById(R.id.gesture_bar);
         gestureText = findViewById(R.id.gesture_text);
@@ -426,6 +428,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showIndicator(int iconRes, int percent) {
         gestureIcon.setImageResource(iconRes);
+        gestureRing.setProgress(percent);
         gestureCircle.setVisibility(View.VISIBLE);
         gestureSeekInfo.setVisibility(View.GONE);
         gestureIndicator.setVisibility(View.VISIBLE);

@@ -22,21 +22,23 @@
         android:layout_gravity="center"
         android:visibility="gone">
 
-        <LinearLayout
+        <FrameLayout
             android:id="@+id/gesture_circle"
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_gesture_circle"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_width="104dp"
+            android:layout_height="104dp"
+            android:layout_gravity="center">
+            <com.baru.player.GestureRingView
+                android:id="@+id/gesture_ring"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
             <ImageView
                 android:id="@+id/gesture_icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="center"
                 android:contentDescription="@null"
                 android:tint="@android:color/white" />
-        </LinearLayout>
+        </FrameLayout>
 
         <LinearLayout
             android:id="@+id/gesture_seek_info"
