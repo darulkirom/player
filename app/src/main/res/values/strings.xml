@@ -81,4 +81,7 @@
     <string name="tab_video">Video</string>
     <string name="tab_audio">Audio</string>
     <string name="oke">OKE</string>
+    <string name="cd_lainnya">Tombol lainnya</string>
+    <string name="cd_kurangi">Kembali</string>
+    <string name="cd_subtitle">Subtitle</string>
 </resources>

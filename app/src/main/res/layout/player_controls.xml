@@ -130,57 +130,67 @@
                 app:touch_target_height="28dp"
                 app:unplayed_color="#33FFFFFF" />
 
-            <LinearLayout
+            <!-- Struktur bawah mengikuti layout bawaan Media3 (exo_basic_controls /
+                 exo_extra_controls) supaya tombol >/< muncul otomatis saat layar sempit
+                 (potret) dan semua tombol tampil sekaligus saat lanskap. -->
+            <FrameLayout
+                android:id="@+id/exo_bottom_bar"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="4dp">
+                android:layoutDirection="ltr">
 
-                <TextView
-                    android:id="@+id/exo_position"
+                <LinearLayout
+                    android:id="@+id/exo_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:includeFontPadding="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
+                    android:layout_gravity="center_vertical|start"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="4dp">
 
-                <TextView
+                    <TextView
+                        android:id="@+id/exo_position"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:text=" · "
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/exo_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/exo_basic_controls"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:includeFontPadding="false"
-                    android:text=" · "
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="12sp" />
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical|end"
+                    android:gravity="center_vertical"
+                    android:layoutDirection="ltr"
+                    android:orientation="horizontal"
+                    android:paddingEnd="4dp">
 
-                <TextView
-                    android:id="@+id/exo_duration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:includeFontPadding="false"
-                    android:textColor="#B3FFFFFF"
-                    android:textSize="12sp" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/resizeTextView"
-                    android:layout_width="wrap_content"
+                <ImageButton
+                    android:id="@+id/exo_settings"
+                    android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:minWidth="40dp"
-                    android:paddingStart="6dp"
-                    android:paddingEnd="6dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:contentDescription="@string/cd_pengaturan"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_settings" />
 
                 <ImageButton
                     android:id="@+id/btn_mute"
@@ -191,30 +201,14 @@
                     android:padding="8dp"
                     android:src="@drawable/ic_volume_up" />
 
-                <TextView
-                    android:id="@+id/btn_quality"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:minWidth="40dp"
-                    android:paddingStart="6dp"
-                    android:paddingEnd="6dp"
-                    android:text="@string/kualitas"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
                 <ImageButton
-                    android:id="@+id/btn_rotate"
+                    android:id="@+id/btn_quality"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/rotasi"
+                    android:contentDescription="@string/kualitas"
                     android:padding="8dp"
-                    android:src="@drawable/ic_screen_rotation" />
+                    android:src="@drawable/ic_video_settings" />
 
                 <ImageButton
                     android:id="@+id/btn_pip"
@@ -226,14 +220,78 @@
                     android:src="@drawable/ic_pip" />
 
                 <ImageButton
-                    android:id="@+id/exo_settings"
+                    android:id="@+id/btn_rotate"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/cd_pengaturan"
+                    android:contentDescription="@string/rotasi"
                     android:padding="8dp"
-                    android:src="@drawable/ic_settings" />
-            </LinearLayout>
+                    android:src="@drawable/ic_screen_rotation" />
+
+                <ImageButton
+                    android:id="@+id/exo_overflow_show"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_lainnya"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_chevron_right" />
+
+                </LinearLayout>
+
+                <HorizontalScrollView
+                    android:id="@+id/exo_extra_controls_scroll_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical|end"
+                    android:scrollbars="none"
+                    android:visibility="invisible">
+
+                    <LinearLayout
+                        android:id="@+id/exo_extra_controls"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:layoutDirection="ltr"
+                        android:orientation="horizontal"
+                        android:paddingEnd="4dp">
+
+                        <TextView
+                            android:id="@+id/resizeTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:minWidth="40dp"
+                            android:paddingStart="6dp"
+                            android:paddingEnd="6dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <ImageButton
+                            android:id="@+id/exo_subtitle"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/cd_subtitle"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_closed_caption" />
+
+                        <ImageButton
+                            android:id="@+id/exo_overflow_hide"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/cd_kurangi"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_chevron_left" />
+
+                    </LinearLayout>
+                </HorizontalScrollView>
+            </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 </merge>

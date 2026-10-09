@@ -107,13 +107,14 @@ public class PlayerActivity extends AppCompatActivity {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
     };
+    private static final int[] CYCLE = {0, 4, 3};
 
     private PlayerView playerView;
     private View lockLayer;
     private ImageButton unlockBtn;
     private TextView pill;
     private ImageButton muteBtn;
-    private TextView qualityBtn;
+    private View qualityBtn;
     private TextView resizeText;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable hideUnlock = () -> unlockBtn.setVisibility(View.GONE);
@@ -203,11 +204,10 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.findViewById(R.id.back_button).setOnClickListener(v -> finish());
         playerView.findViewById(R.id.lock_player).setOnClickListener(v -> setLocked(true));
         muteBtn.setOnClickListener(v -> toggleMute());
-        qualityBtn.setOnClickListener(v -> showQualityDialog());
+        qualityBtn.setOnClickListener(v -> showTrackDialog());
         playerView.findViewById(R.id.btn_rotate).setOnClickListener(v -> showOrientationDialog());
         resizeText.setOnClickListener(v -> toggleFitZoom());
         resizeText.setOnLongClickListener(v -> { showResizeDialog(); return true; });
-        playerView.findViewById(R.id.exo_settings).setOnClickListener(v -> showTrackDialog());
         pill.setOnClickListener(v -> { if (locked) setLocked(false); });
 
         boolean pipOk = Build.VERSION.SDK_INT >= 26
@@ -669,11 +669,15 @@ public class PlayerActivity extends AppCompatActivity {
 
     /** Ketuk teks Fit/Zoom: bolak-balik Fit <-> Zoom. Tahan lama: daftar semua mode. */
     private void toggleFitZoom() {
-        resizeIdx = (resizeIdx == 0) ? 4 : 0;
-        prefs.edit().putInt("resize", resizeIdx).apply();
-        applyResize();
-        showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
+    int pos = 0;
+    for (int i = 0; i < CYCLE.length; i++) {
+        if (CYCLE[i] == resizeIdx) { pos = i; break; }
     }
+    resizeIdx = CYCLE[(pos + 1) % CYCLE.length];
+    prefs.edit().putInt("resize", resizeIdx).apply();
+    applyResize();
+    showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
+}
 
     private static final class TItem {
         final String label;
@@ -799,6 +803,15 @@ public class PlayerActivity extends AppCompatActivity {
                 addTrackRow(rows, items.get(i).label, sel[k] == i,
                         () -> { sel[k] = idx; render[0].run(); });
             }
+            if (k == 0) {
+                for (int i = 0; i < options.size(); i++) {
+                    if (i == current) continue;
+                    final int src = i;
+                    addTrackRow(rows, getString(R.string.sumber_lain) + ": "
+                            + options.get(i).optString("label", "?"), false,
+                            () -> { dlg.dismiss(); switchTo(src); });
+                }
+            }
             rows.measure(View.MeasureSpec.makeMeasureSpec(dp(300), View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
             scroll.getLayoutParams().height = Math.min(rows.getMeasuredHeight(), dp(180));
@@ -844,7 +857,6 @@ public class PlayerActivity extends AppCompatActivity {
                 public void onVideoSizeChanged(VideoSize size) {
                     if (size.height > 0) {
                         int n = size.width > 0 ? Math.min(size.width, size.height) : size.height;
-                        qualityBtn.setText(n + "p");
                     }
                 }
 
