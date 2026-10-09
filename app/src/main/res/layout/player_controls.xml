@@ -1,77 +1,230 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#80000000">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Control Bar Atas -->
+    <!-- Background Controller Overlay -->
+    <FrameLayout
+        android:id="@id/exo_controls_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layoutDirection="ltr">
+
+        <!-- Bar Control Atas (Judul Video, Back, Lock) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@id/topControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#80000000"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toStartOf="@id/lock_player"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageButton
+                    android:id="@id/back_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Keluar"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close"
+                    app:tint="@android:color/white" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="0dp" />
+
+                <TextView
+                    android:id="@id/titleTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="16dp"
+                    android:ellipsize="marquee"
+                    android:fadingEdge="horizontal"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@id/lock_player"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="Kunci Layar"
+                android:padding="8dp"
+                android:src="@drawable/ic_unlocked"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+
+    <!-- Bar Control Bawah -->
+    <FrameLayout
+        android:id="@id/exo_bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#80000000"
+        android:layoutDirection="ltr"
+        android:padding="8dp">
+
+        <!-- Waktu & Durasi Video -->
+        <LinearLayout
+            android:id="@id/exo_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:layoutDirection="ltr"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@id/exo_position"
+                style="@style/ExoStyledControls.TimeText.Position" />
+
+            <TextView
+                style="@style/ExoStyledControls.TimeText.Separator" />
+
+            <TextView
+                android:id="@id/exo_duration"
+                style="@style/ExoStyledControls.TimeText.Duration" />
+        </LinearLayout>
+
+        <!-- Tombol Utama (Basic Controls) -->
+        <LinearLayout
+            android:id="@id/exo_basic_controls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layoutDirection="ltr">
+
+            <ImageButton
+                android:id="@id/exo_subtitle"
+                style="@style/ExoStyledControls.Button.Bottom.CC" />
+
+            <ImageButton
+                android:id="@id/exo_settings"
+                style="@style/ExoStyledControls.Button.Bottom.Settings" />
+
+            <ImageButton
+                android:id="@id/exo_mute"
+                style="@style/ExoStyledControls.Button.Bottom.Volume" />
+
+            <ImageButton
+                android:id="@id/exo_overflow_show"
+                style="@style/ExoStyledControls.Button.Bottom.OverflowShow" />
+        </LinearLayout>
+
+        <!-- Menu Overflow / Tombol Ekstra (Disembunyikan di balik tombol Overflow/Panah) -->
+        <HorizontalScrollView
+            android:id="@id/exo_extra_controls_scroll_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:visibility="invisible">
+
+            <LinearLayout
+                android:id="@id/exo_extra_controls"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layoutDirection="ltr">
+
+                <TextView
+                    android:id="@id/exo_resizeTextView"
+                    style="@style/ExoStyledControls.Button.Bottom.Resize" />
+
+                <ImageButton
+                    android:id="@id/exo_select_track"
+                    style="@style/ExoStyledControls.Button.Bottom.Video" />
+
+                <ImageButton
+                    android:id="@id/exo_pip"
+                    style="@style/ExoStyledControls.Button.Bottom.Audio" />
+
+                <ImageButton
+                    android:id="@id/exo_overflow_hide"
+                    style="@style/ExoStyledControls.Button.Bottom.OverflowHide" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </FrameLayout>
+
+    <!-- Seekbar / Progress Bar Media3 -->
+    <androidx.media3.ui.DefaultTimeBar
+        android:id="@id/exo_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="40dp"
+        app:bar_gravity="bottom"
+        app:bar_height="4dp"
+        app:scrubber_dragged_size="16dp"
+        app:scrubber_enabled_size="12dp"
+        app:touch_target_height="24dp" />
+
+    <!-- Kontrol Tengah (Rewind, Play/Pause, Fast Forward) -->
     <LinearLayout
+        android:id="@id/exo_center_controls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:background="@android:color/transparent"
+        android:clipToPadding="false"
+        android:gravity="center"
+        android:layoutDirection="ltr"
         android:padding="16dp">
 
-        <ImageButton
-            android:id="@+id/btn_video_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_video_settings" />
+        <Button
+            android:id="@id/exo_rew_with_amount"
+            style="@style/ExoStyledControls.Button.Center.RewWithAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <ImageButton
-            android:id="@+id/btn_subtitle_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_closed_caption" />
+            android:id="@id/exo_play_pause"
+            style="@style/ExoStyledControls.Button.Center.PlayPause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-        <ImageButton
-            android:id="@+id/btn_audio_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_settings" />
-
-        <ImageButton
-    android:id="@+id/btn_pip"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:src="@drawable/ic_pip" />
-
-<ImageButton
-    android:id="@+id/btn_rotate"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:src="@drawable/ic_screen_rotation" />
-            
-
-        <ImageButton
-            android:id="@+id/btn_resize_mode"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_screen_rotation" />
-
-        <ImageButton
-            android:id="@+id/btn_lock"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_lock" />
+        <Button
+            android:id="@id/exo_ffwd_with_amount"
+            style="@style/ExoStyledControls.Button.Center.FfwdWithAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <!-- Tombol Buka Kunci (Melayang di Pojok Kiri Atas saat terkunci) -->
-    <ImageButton
-        android:id="@+id/btn_unlock"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:visibility="gone"
-        android:background="@drawable/bg_pill"
-        android:src="@drawable/ic_lock_open" />
+    <!-- Overlay Transparan untuk Sentuhan Kiri/Kanan/Atas -->
+    <View
+        android:id="@id/exo_top"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="top"
+        android:background="#B3000000" />
 
-</RelativeLayout>
+    <View
+        android:id="@id/exo_left"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left" />
+
+    <View
+        android:id="@id/exo_right"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right" />
+
+</merge>
