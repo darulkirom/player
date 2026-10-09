@@ -107,7 +107,6 @@ public class PlayerActivity extends AppCompatActivity {
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
             ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
     };
-    private static final int[] CYCLE = {0, 4, 3};
 
     private PlayerView playerView;
     private View lockLayer;
@@ -669,15 +668,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     /** Ketuk teks Fit/Zoom: bolak-balik Fit <-> Zoom. Tahan lama: daftar semua mode. */
     private void toggleFitZoom() {
-    int pos = 0;
-    for (int i = 0; i < CYCLE.length; i++) {
-        if (CYCLE[i] == resizeIdx) { pos = i; break; }
+        resizeIdx = (resizeIdx == 0) ? 4 : 0;
+        prefs.edit().putInt("resize", resizeIdx).apply();
+        applyResize();
+        showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
     }
-    resizeIdx = CYCLE[(pos + 1) % CYCLE.length];
-    prefs.edit().putInt("resize", resizeIdx).apply();
-    applyResize();
-    showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
-}
 
     private static final class TItem {
         final String label;

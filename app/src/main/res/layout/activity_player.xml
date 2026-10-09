@@ -11,6 +11,7 @@
         android:layout_height="match_parent"
         app:controller_layout_id="@layout/player_controls"
         app:resize_mode="fit"
+        app:show_subtitle_button="true"
         app:show_buffering="when_playing"
         app:show_timeout="4000" />
 
