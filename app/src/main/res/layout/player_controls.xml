@@ -150,7 +150,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text=" / "
+                    android:text=" · "
                     android:textColor="#B3FFFFFF"
                     android:textSize="12sp" />
 

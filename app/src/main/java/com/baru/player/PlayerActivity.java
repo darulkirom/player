@@ -1,6 +1,20 @@
 package com.baru.player;
 
+import android.app.Dialog;
 import android.app.PictureInPictureParams;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.ScrollView;
+import androidx.core.content.ContextCompat;
+import androidx.media3.common.TrackSelectionParameters;
+import java.util.Locale;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -97,6 +111,7 @@ public class PlayerActivity extends AppCompatActivity {
     private PlayerView playerView;
     private View lockLayer;
     private ImageButton unlockBtn;
+    private TextView pill;
     private ImageButton muteBtn;
     private TextView qualityBtn;
     private TextView resizeText;
@@ -159,6 +174,7 @@ public class PlayerActivity extends AppCompatActivity {
         gestureBar = findViewById(R.id.gesture_bar);
         gestureText = findViewById(R.id.gesture_text);
         unlockBtn = findViewById(R.id.btn_unlock);
+        pill = findViewById(R.id.pill);
         // tampilan kontrol (player_controls.xml) ada di dalam PlayerView
         View topControls = playerView.findViewById(R.id.top_controls);
         View bottomWrapper = playerView.findViewById(R.id.bottom_wrapper);
@@ -189,7 +205,10 @@ public class PlayerActivity extends AppCompatActivity {
         muteBtn.setOnClickListener(v -> toggleMute());
         qualityBtn.setOnClickListener(v -> showQualityDialog());
         playerView.findViewById(R.id.btn_rotate).setOnClickListener(v -> showOrientationDialog());
-        resizeText.setOnClickListener(v -> showResizeDialog());
+        resizeText.setOnClickListener(v -> toggleFitZoom());
+        resizeText.setOnLongClickListener(v -> { showResizeDialog(); return true; });
+        playerView.findViewById(R.id.exo_settings).setOnClickListener(v -> showTrackDialog());
+        pill.setOnClickListener(v -> { if (locked) setLocked(false); });
 
         boolean pipOk = Build.VERSION.SDK_INT >= 26
                 && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
@@ -425,7 +444,8 @@ public class PlayerActivity extends AppCompatActivity {
             getWindow().setAttributes(lp);
             showIndicator(b < 0.33f ? R.drawable.ic_brightness_low
                     : b < 0.66f ? R.drawable.ic_brightness_medium
-                    : R.drawable.ic_brightness_high, Math.round(b * 100));
+                    : R.drawable.ic_brightness_high,
+                    Math.round((b - 0.02f) / 0.98f * 100)); // 0% tepat di batas minimum
         } else if (gMode == 2) {
             float vf = Math.max(0f, Math.min(gMaxVolume, gStartVolume + delta * gMaxVolume));
             int idx = Math.round(vf);
@@ -471,19 +491,19 @@ public class PlayerActivity extends AppCompatActivity {
             playerView.hideController();
             playerView.setUseController(false);
             lockLayer.setVisibility(View.VISIBLE);
-            showUnlockTemporarily();
+            showPill(getString(R.string.pill_locked), R.drawable.ic_lock, false, 1500);
         } else {
             lockLayer.setVisibility(View.GONE);
             unlockBtn.setVisibility(View.GONE);
             playerView.setUseController(true);
             playerView.showController();
+            showPill(getString(R.string.pill_unlocked), R.drawable.ic_lock_open, false, 1500);
         }
     }
 
     private void showUnlockTemporarily() {
-        unlockBtn.setVisibility(View.VISIBLE);
-        handler.removeCallbacks(hideUnlock);
-        handler.postDelayed(hideUnlock, 3000);
+        // layar terkunci: ketuk layar -> pill "Tap to Unlock"; ketuk pill untuk membuka
+        showPill(getString(R.string.pill_tap_unlock), R.drawable.ic_lock, true, 3000);
     }
 
     @SuppressWarnings("deprecation")
@@ -615,6 +635,197 @@ public class PlayerActivity extends AppCompatActivity {
             Toast.makeText(this, getString(R.string.gagal_putar, e.toString()),
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+
+    // ------------------------------------------------ pill info & dialog trek
+
+    private final Runnable hidePill = () -> pill.animate().alpha(0f).setDuration(200)
+            .withEndAction(() -> pill.setVisibility(View.GONE)).start();
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    private void showPill(String text, int iconRes, boolean clickable, long durationMs) {
+        pill.animate().cancel();
+        pill.setText(text);
+        if (iconRes != 0) {
+            Drawable d = ContextCompat.getDrawable(this, iconRes);
+            if (d != null) {
+                d = d.mutate();
+                d.setBounds(0, 0, dp(14), dp(14));
+                pill.setCompoundDrawables(d, null, null, null);
+            }
+        } else {
+            pill.setCompoundDrawables(null, null, null, null);
+        }
+        pill.setClickable(clickable);
+        pill.setAlpha(1f);
+        pill.setVisibility(View.VISIBLE);
+        handler.removeCallbacks(hidePill);
+        handler.postDelayed(hidePill, durationMs);
+    }
+
+    /** Ketuk teks Fit/Zoom: bolak-balik Fit <-> Zoom. Tahan lama: daftar semua mode. */
+    private void toggleFitZoom() {
+        resizeIdx = (resizeIdx == 0) ? 4 : 0;
+        prefs.edit().putInt("resize", resizeIdx).apply();
+        applyResize();
+        showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
+    }
+
+    private static final class TItem {
+        final String label;
+        final Tracks.Group group;
+        final int index;
+
+        TItem(String l, Tracks.Group g, int i) {
+            label = l;
+            group = g;
+            index = i;
+        }
+    }
+
+    private List<TItem> trackItems(int type) {
+        List<TItem> out = new ArrayList<>();
+        for (Tracks.Group g : player.getCurrentTracks().getGroups()) {
+            if (g.getType() != type) continue;
+            for (int i = 0; i < g.length; i++) {
+                if (!g.isTrackSupported(i)) continue;
+                out.add(new TItem(trackLabel(type, g.getTrackFormat(i)), g, i));
+            }
+        }
+        return out;
+    }
+
+    private String trackLabel(int type, Format f) {
+        StringBuilder sb = new StringBuilder();
+        if (type == C.TRACK_TYPE_VIDEO) {
+            if (f.width > 0 && f.height > 0) sb.append(f.width).append(" × ").append(f.height);
+        } else {
+            if (f.channelCount == 1) sb.append("Mono");
+            else if (f.channelCount == 2) sb.append("Stereo");
+            else if (f.channelCount > 2) sb.append(f.channelCount).append(" ch");
+            if (f.language != null && !"und".equals(f.language)) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(f.language);
+            }
+        }
+        int br = f.bitrate > 0 ? f.bitrate : f.averageBitrate;
+        if (br > 0) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(String.format(Locale.getDefault(), "%.2f Mbps", br / 1_000_000f));
+        }
+        if (sb.length() == 0) sb.append("?");
+        return sb.toString();
+    }
+
+    /** -2 = None, -1 = Auto, >= 0 = indeks trek terpilih. */
+    private int currentTrackSel(int type, List<TItem> items) {
+        TrackSelectionParameters p = player.getTrackSelectionParameters();
+        if (p.disabledTrackTypes.contains(type)) return -2;
+        boolean hasOverride = false;
+        for (TrackSelectionOverride o : p.overrides.values()) {
+            if (o.getType() == type) hasOverride = true;
+        }
+        if (!hasOverride) return -1;
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).group.isTrackSelected(items.get(i).index)) return i;
+        }
+        return -1;
+    }
+
+    private void addTrackRow(LinearLayout parent, String label, boolean checked, Runnable click) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(8), 0, dp(4), 0);
+        row.setMinimumHeight(dp(44));
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextColor(0xFFFFFFFF);
+        tv.setTextSize(14);
+        row.addView(tv, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        RadioButton rb = new RadioButton(this);
+        rb.setChecked(checked);
+        rb.setClickable(false);
+        rb.setFocusable(false);
+        rb.setButtonTintList(new ColorStateList(
+                new int[][]{{android.R.attr.state_checked}, {}},
+                new int[]{0xFF2BC6E0, 0xFFB0B7BE}));
+        row.addView(rb);
+        row.setOnClickListener(v -> click.run());
+        parent.addView(row, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    /** Ikon roda gigi: dialog dengan tab Video / Audio, pilihan None / Auto / trek, BATAL / OKE. */
+    private void showTrackDialog() {
+        if (player == null) return;
+        final int[] types = {C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO};
+        final List<List<TItem>> lists = new ArrayList<>();
+        final int[] sel = new int[2];
+        for (int k = 0; k < 2; k++) {
+            List<TItem> l = trackItems(types[k]);
+            lists.add(l);
+            sel[k] = currentTrackSel(types[k], l);
+        }
+
+        final Dialog dlg = new Dialog(this);
+        dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        View root = getLayoutInflater().inflate(R.layout.dialog_tracks, null);
+        dlg.setContentView(root);
+
+        final TextView[] tabs = {root.findViewById(R.id.tab_video), root.findViewById(R.id.tab_audio)};
+        final LinearLayout rows = root.findViewById(R.id.track_rows);
+        final ScrollView scroll = root.findViewById(R.id.track_scroll);
+        final int[] tab = {0};
+        final Runnable[] render = new Runnable[1];
+        render[0] = () -> {
+            final int k = tab[0];
+            for (int t = 0; t < 2; t++) {
+                tabs[t].setTextColor(t == k ? 0xFFFFFFFF : 0x99FFFFFF);
+                int flags = tabs[t].getPaintFlags();
+                tabs[t].setPaintFlags(t == k ? flags | Paint.UNDERLINE_TEXT_FLAG
+                        : flags & ~Paint.UNDERLINE_TEXT_FLAG);
+            }
+            rows.removeAllViews();
+            addTrackRow(rows, "None", sel[k] == -2, () -> { sel[k] = -2; render[0].run(); });
+            addTrackRow(rows, "Auto", sel[k] == -1, () -> { sel[k] = -1; render[0].run(); });
+            List<TItem> items = lists.get(k);
+            for (int i = 0; i < items.size(); i++) {
+                final int idx = i;
+                addTrackRow(rows, items.get(i).label, sel[k] == i,
+                        () -> { sel[k] = idx; render[0].run(); });
+            }
+            rows.measure(View.MeasureSpec.makeMeasureSpec(dp(300), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            scroll.getLayoutParams().height = Math.min(rows.getMeasuredHeight(), dp(180));
+            scroll.requestLayout();
+        };
+        tabs[0].setOnClickListener(v -> { tab[0] = 0; render[0].run(); });
+        tabs[1].setOnClickListener(v -> { tab[0] = 1; render[0].run(); });
+        root.findViewById(R.id.track_cancel).setOnClickListener(v -> dlg.dismiss());
+        root.findViewById(R.id.track_ok).setOnClickListener(v -> {
+            TrackSelectionParameters.Builder b = player.getTrackSelectionParameters().buildUpon();
+            for (int k = 0; k < 2; k++) {
+                b.clearOverridesOfType(types[k]);
+                b.setTrackTypeDisabled(types[k], sel[k] == -2);
+                if (sel[k] >= 0) {
+                    TItem it = lists.get(k).get(sel[k]);
+                    b.setOverrideForType(new TrackSelectionOverride(it.group.getMediaTrackGroup(), it.index));
+                }
+            }
+            player.setTrackSelectionParameters(b.build());
+            dlg.dismiss();
+        });
+        render[0].run();
+
+        dlg.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dlg.show();
+        int w = Math.min(dp(420), (int) (getResources().getDisplayMetrics().widthPixels * 0.9f));
+        dlg.getWindow().setLayout(w, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     // ---------------------------------------------------------------- player

@@ -75,4 +75,10 @@
         <item>4) TikTok / Instagram / X</item>
         <item>5) Lainnya (otomatis)</item>
     </string-array>
+    <string name="pill_locked">Locked</string>
+    <string name="pill_unlocked">Unlocked</string>
+    <string name="pill_tap_unlock">Tap to Unlock</string>
+    <string name="tab_video">Video</string>
+    <string name="tab_audio">Audio</string>
+    <string name="oke">OKE</string>
 </resources>
