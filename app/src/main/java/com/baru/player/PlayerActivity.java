@@ -1,11 +1,18 @@
 package com.baru.player;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +27,6 @@ import java.io.File;
 
 public class PlayerActivity extends AppCompatActivity {
 
-    // --- KONSTANTA INTENT UNTUK MAINACTIVITY ---
     public static final String EXTRA_OPTIONS = "EXTRA_OPTIONS";
     public static final String EXTRA_INDEX = "EXTRA_INDEX";
     public static final String EXTRA_TITLE = "EXTRA_TITLE";
@@ -29,18 +35,20 @@ public class PlayerActivity extends AppCompatActivity {
     private PlayerView playerView;
     private boolean isLocked = false;
 
-    // Status Resize Mode
     private int currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT;
 
-    // Tombol UI Control
-    private ImageButton btnVideoTracks;
-    private ImageButton btnAudioTracks;
-    private ImageButton btnSubtitleTracks;
-    private ImageButton btnResizeMode;
-    private ImageButton btnLock;
-    private ImageButton btnUnlock;
+    // View & Button dari layout player_controls.xml berbasis merge
+    private TextView tvTitle;
+    private ImageButton btnBack;
+    private ImageButton btnLockPlayer;
+    private TextView tvResizeMode;
+    private ImageButton btnSubtitle;
+    private ImageButton btnSelectTrack;
     private ImageButton btnPip;
-    private ImageButton btnRotate;
+
+    // Gestur Audio & Kecerahan
+    private AudioManager audioManager;
+    private GestureDetector gestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,36 +56,74 @@ public class PlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_player);
 
         playerView = findViewById(R.id.player_view);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        // 1. Inisialisasi Player Media3
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
 
-        // 2. Jalankan LocalServer Menggunakan Singleton bawaan
-        File serverRoot = getCacheDir(); // Folder penyimpanan master .m3u8
+        File serverRoot = getCacheDir();
         boolean serverRunning = LocalServer.ensureStarted(serverRoot);
         if (!serverRunning) {
             Toast.makeText(this, "Gagal menjalankan LocalServer internal", Toast.LENGTH_SHORT).show();
         }
 
-        // 3. Inisialisasi Tombol Kontrol
         initControls();
-
-        // 4. Tangani Intent yang Masuk
+        initGestures();
         handleIncomingIntent(getIntent());
+    }
+
+    private void initControls() {
+        // Top Bar Controls
+        btnBack = findViewById(R.id.back_button);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
+
+        tvTitle = findViewById(R.id.titleTextView);
+
+        btnLockPlayer = findViewById(R.id.lock_player);
+        if (btnLockPlayer != null) {
+            btnLockPlayer.setOnClickListener(v -> toggleScreenLock());
+        }
+
+        // Bottom Controls
+        tvResizeMode = findViewById(R.id.exo_resizeTextView);
+        if (tvResizeMode != null) {
+            tvResizeMode.setOnClickListener(v -> toggleResizeMode());
+        }
+
+        btnSubtitle = findViewById(R.id.exo_subtitle);
+        if (btnSubtitle != null) {
+            btnSubtitle.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_TEXT, "Pilih Subtitle"));
+        }
+
+        btnSelectTrack = findViewById(R.id.exo_select_track);
+        if (btnSelectTrack != null) {
+            btnSelectTrack.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_VIDEO, "Pilih Kualitas Video"));
+        }
+
+        btnPip = findViewById(R.id.exo_pip);
+        if (btnPip != null) {
+            btnPip.setOnClickListener(v -> {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    enterPictureInPictureMode();
+                }
+            });
+        }
     }
 
     private void handleIncomingIntent(Intent intent) {
         if (intent == null) return;
 
-        Uri videoUri = null;
+        // Set Judul jika dikirim via Extra
+        if (intent.hasExtra(EXTRA_TITLE) && tvTitle != null) {
+            tvTitle.setText(intent.getStringExtra(EXTRA_TITLE));
+        }
 
-        // Intent dari Aplikasi Luar (File Manager/Browser)
+        Uri videoUri = null;
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             videoUri = intent.getData();
-        } 
-        // Intent Internal dari MainActivity
-        else if (intent.hasExtra("VIDEO_URL")) {
+        } else if (intent.hasExtra("VIDEO_URL")) {
             String urlString = intent.getStringExtra("VIDEO_URL");
             if (urlString != null && !urlString.isEmpty()) {
                 videoUri = Uri.parse(urlString);
@@ -99,61 +145,75 @@ public class PlayerActivity extends AppCompatActivity {
         handleIncomingIntent(intent);
     }
 
-    private void initControls() {
-        // --- DIALOG TRACK MEDIA3 ---
-        btnVideoTracks = findViewById(R.id.btn_video_tracks);
-        if (btnVideoTracks != null) {
-            btnVideoTracks.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_VIDEO, "Pilih Kualitas Video"));
-        }
+    private void initGestures() {
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                if (isLocked || e1 == null || e2 == null) return false;
 
-        btnAudioTracks = findViewById(R.id.btn_audio_tracks);
-        if (btnAudioTracks != null) {
-            btnAudioTracks.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_AUDIO, "Pilih Trek Audio"));
-        }
+                float deltaY = e1.getY() - e2.getY();
+                float deltaX = e1.getX() - e2.getX();
 
-        btnSubtitleTracks = findViewById(R.id.btn_subtitle_tracks);
-        if (btnSubtitleTracks != null) {
-            btnSubtitleTracks.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_TEXT, "Pilih Subtitle"));
-        }
-
-        // --- RESIZE MODE (FIT -> FILL -> ZOOM) ---
-        btnResizeMode = findViewById(R.id.btn_resize_mode);
-        if (btnResizeMode != null) {
-            btnResizeMode.setOnClickListener(v -> toggleResizeMode());
-        }
-
-        // --- CUSTOM LOCK SCREEN ---
-        btnLock = findViewById(R.id.btn_lock);
-        btnUnlock = findViewById(R.id.btn_unlock);
-
-        if (btnLock != null) {
-            btnLock.setOnClickListener(v -> setScreenLocked(true));
-        }
-        if (btnUnlock != null) {
-            btnUnlock.setOnClickListener(v -> setScreenLocked(false));
-        }
-
-        // --- PIP & ROTASI LAYAR (Null-Safe) ---
-        btnPip = findViewById(R.id.btn_pip);
-        if (btnPip != null) {
-            btnPip.setOnClickListener(v -> {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    enterPictureInPictureMode();
+                if (Math.abs(deltaY) > Math.abs(deltaX)) {
+                    int screenWidth = getResources().getDisplayMetrics().widthPixels;
+                    if (e1.getX() < (float) screenWidth / 2) {
+                        adjustBrightness(deltaY);
+                    } else {
+                        adjustVolume(deltaY);
+                    }
+                    return true;
                 }
-            });
-        }
+                return false;
+            }
 
-        btnRotate = findViewById(R.id.btn_rotate);
-        if (btnRotate != null) {
-            btnRotate.setOnClickListener(v -> {
-                int orientation = getRequestedOrientation();
-                if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                if (isLocked || player == null || e == null) return false;
+                int screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+                if (e.getX() > (float) screenWidth / 2) {
+                    player.seekTo(player.getCurrentPosition() + 10000);
+                    Toast.makeText(PlayerActivity.this, "+10 dtk", Toast.LENGTH_SHORT).show();
                 } else {
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    player.seekTo(Math.max(0, player.getCurrentPosition() - 10000));
+                    Toast.makeText(PlayerActivity.this, "-10 dtk", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
+                return true;
+            }
+        });
+
+        playerView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false;
+        });
+    }
+
+    private void adjustVolume(float deltaY) {
+        if (audioManager == null) return;
+        int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        int step = deltaY > 0 ? 1 : -1;
+        int newVol = Math.max(0, Math.min(maxVol, currentVol + step));
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
+
+        Toast.makeText(this, "Volume: " + (newVol * 100 / maxVol) + "%", Toast.LENGTH_SHORT).show();
+    }
+
+    private void adjustBrightness(float deltaY) {
+        Window window = getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        float brightness = lp.screenBrightness;
+
+        if (brightness < 0) brightness = 0.5f;
+
+        brightness += (deltaY > 0 ? 0.05f : -0.05f);
+        brightness = Math.max(0.01f, Math.min(1.0f, brightness));
+
+        lp.screenBrightness = brightness;
+        window.setAttributes(lp);
+
+        Toast.makeText(this, "Kecerahan: " + (int) (brightness * 100) + "%", Toast.LENGTH_SHORT).show();
     }
 
     private void showTrackSelectionDialog(int trackType, String title) {
@@ -189,16 +249,20 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setResizeMode(currentResizeMode);
     }
 
-    private void setScreenLocked(boolean locked) {
-        isLocked = locked;
+    private void toggleScreenLock() {
+        isLocked = !isLocked;
         if (isLocked) {
             playerView.setUseController(false);
-            if (btnUnlock != null) btnUnlock.setVisibility(View.VISIBLE);
+            if (btnLockPlayer != null) {
+                btnLockPlayer.setImageResource(R.drawable.ic_lock);
+            }
             Toast.makeText(this, "Layar Dikunci", Toast.LENGTH_SHORT).show();
         } else {
             playerView.setUseController(true);
             playerView.showController();
-            if (btnUnlock != null) btnUnlock.setVisibility(View.GONE);
+            if (btnLockPlayer != null) {
+                btnLockPlayer.setImageResource(R.drawable.ic_unlocked);
+            }
             Toast.makeText(this, "Layar Terbuka", Toast.LENGTH_SHORT).show();
         }
     }
