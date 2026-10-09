@@ -14,40 +14,62 @@
         app:show_buffering="when_playing"
         app:show_timeout="4000" />
 
-    <!-- Indikator volume / kecerahan (gesture geser vertikal) -->
-    <LinearLayout
+    <!-- Indikator gesture berada tepat di tengah layar, seperti player referensi -->
+    <FrameLayout
         android:id="@+id/gesture_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@drawable/bg_indicator"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="16dp"
         android:visibility="gone">
 
-        <ImageView
-            android:id="@+id/gesture_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:contentDescription="@null" />
+        <LinearLayout
+            android:id="@+id/gesture_circle"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_gesture_circle"
+            android:gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:id="@+id/gesture_icon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:contentDescription="@null"
+                android:tint="@android:color/white" />
+        </LinearLayout>
 
-        <ProgressBar
-            android:id="@+id/gesture_bar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="140dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:max="100" />
-
-        <TextView
-            android:id="@+id/gesture_text"
+        <LinearLayout
+            android:id="@+id/gesture_seek_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
-    </LinearLayout>
+            android:layout_gravity="center"
+            android:background="@drawable/bg_indicator"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone">
+            <ImageView
+                android:id="@+id/gesture_seek_icon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:contentDescription="@null"
+                android:tint="@android:color/white" />
+            <ProgressBar
+                android:id="@+id/gesture_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:max="100" />
+            <TextView
+                android:id="@+id/gesture_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- Lapisan saat layar dikunci: ketuk untuk memunculkan tombol buka kunci -->
     <FrameLayout

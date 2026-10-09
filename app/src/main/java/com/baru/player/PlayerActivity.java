@@ -108,6 +108,9 @@ public class PlayerActivity extends AppCompatActivity {
     // gesture volume / kecerahan
     private View gestureIndicator;
     private ImageView gestureIcon;
+    private ImageView gestureSeekIcon;
+    private View gestureCircle;
+    private View gestureSeekInfo;
     private ProgressBar gestureBar;
     private TextView gestureText;
     private AudioManager audio;
@@ -119,6 +122,9 @@ public class PlayerActivity extends AppCompatActivity {
     private float gStartBrightness;
     private int gStartVolume;
     private int gMaxVolume = 1;
+    private long gStartPosition;
+    private long gPreviewPosition;
+    private long gSeekDuration;
     private ExoPlayer player;
     private SharedPreferences prefs;
 
@@ -144,6 +150,9 @@ public class PlayerActivity extends AppCompatActivity {
         lockLayer = findViewById(R.id.lock_layer);
         gestureIndicator = findViewById(R.id.gesture_indicator);
         gestureIcon = findViewById(R.id.gesture_icon);
+        gestureSeekIcon = findViewById(R.id.gesture_seek_icon);
+        gestureCircle = findViewById(R.id.gesture_circle);
+        gestureSeekInfo = findViewById(R.id.gesture_seek_info);
         gestureBar = findViewById(R.id.gesture_bar);
         gestureText = findViewById(R.id.gesture_text);
         unlockBtn = findViewById(R.id.btn_unlock);
@@ -298,15 +307,27 @@ public class PlayerActivity extends AppCompatActivity {
                     float dx = e.getX() - gStartX;
                     float dy = e.getY() - gStartY;
                     if (!gActive) {
-                        if (Math.abs(dy) > slop && Math.abs(dy) > Math.abs(dx) * 1.5f) {
-                            gActive = true;
+                        if (Math.max(Math.abs(dx), Math.abs(dy)) <= slop) return false;
+                        if (Math.abs(dx) > Math.abs(dy) * 1.25f) {
+                            // Geser horizontal = preview seek. Hindari area tepi untuk gesture sistem.
+                            if (gStartX < edge || gStartX > v.getWidth() - edge) {
+                                gMode = -1;
+                                return false;
+                            }
+                            gMode = 3;
+                        } else if (Math.abs(dy) > Math.abs(dx) * 1.25f) {
                             gMode = gStartX < v.getWidth() / 2f ? 1 : 2;
-                            beginGesture();
                         } else {
                             return false;
                         }
+                        gActive = true;
+                        beginGesture();
                     }
-                    updateGesture(-dy / v.getHeight());
+                    if (gMode == 3) {
+                        updateSeekGesture(dx / Math.max(1f, v.getWidth()));
+                    } else {
+                        updateGesture(-dy / Math.max(1f, v.getHeight()));
+                    }
                     return true;
                 }
 
@@ -316,8 +337,11 @@ public class PlayerActivity extends AppCompatActivity {
                     gActive = false;
                     gMode = 0;
                     if (was) {
+                        if (gMode == 3 && player != null && gSeekDuration > 0) {
+                            player.seekTo(Math.max(0L, Math.min(gPreviewPosition, gSeekDuration)));
+                        }
                         handler.removeCallbacks(hideIndicator);
-                        handler.postDelayed(hideIndicator, 600);
+                        handler.postDelayed(hideIndicator, 700);
                     }
                     return was; // kalau tadi geser, jangan dihitung sebagai ketukan
                 }
@@ -328,7 +352,16 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void beginGesture() {
-        if (gMode == 1) {
+        if (gMode == 3) {
+            if (player == null) {
+                gSeekDuration = 0;
+                return;
+            }
+            gStartPosition = Math.max(0L, player.getCurrentPosition());
+            gPreviewPosition = gStartPosition;
+            gSeekDuration = player.getDuration();
+            if (gSeekDuration == C.TIME_UNSET || gSeekDuration <= 0) gSeekDuration = 0;
+        } else if (gMode == 1) {
             float cur = getWindow().getAttributes().screenBrightness;
             if (cur < 0) { // masih ikut sistem: baca kecerahan sistem
                 try {
@@ -344,6 +377,33 @@ public class PlayerActivity extends AppCompatActivity {
             gStartVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
             if (muted) toggleMute(); // menggeser volume = suarakan lagi
         }
+    }
+
+    private void updateSeekGesture(float fraction) {
+        if (player == null || gSeekDuration <= 0) return;
+        // Satu lebar layar menggeser sampai 2 menit; bisa maju maupun mundur.
+        long deltaMs = (long) (fraction * 120_000L);
+        gPreviewPosition = Math.max(0L, Math.min(gSeekDuration, gStartPosition + deltaMs));
+        long diff = gPreviewPosition - gStartPosition;
+        String sign = diff >= 0 ? "+" : "−";
+        gestureSeekIcon.setImageResource(diff >= 0 ? R.drawable.ic_forward : R.drawable.ic_replay);
+        gestureCircle.setVisibility(View.GONE);
+        gestureSeekInfo.setVisibility(View.VISIBLE);
+        gestureBar.setMax(100);
+        gestureBar.setProgress((int) (gPreviewPosition * 100L / Math.max(1L, gSeekDuration)));
+        gestureText.setText(sign + formatGestureTime(Math.abs(diff)) + "  •  "
+                + formatGestureTime(gPreviewPosition) + " / " + formatGestureTime(gSeekDuration));
+        gestureIndicator.setVisibility(View.VISIBLE);
+        handler.removeCallbacks(hideIndicator);
+    }
+
+    private String formatGestureTime(long millis) {
+        long totalSeconds = Math.max(0L, millis / 1000L);
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long seconds = totalSeconds % 60L;
+        if (hours > 0) return String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds);
+        return String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds);
     }
 
     private void updateGesture(float delta) {
@@ -364,8 +424,8 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void showIndicator(int iconRes, int percent) {
         gestureIcon.setImageResource(iconRes);
-        gestureBar.setProgress(percent);
-        gestureText.setText(percent + "%");
+        gestureCircle.setVisibility(View.VISIBLE);
+        gestureSeekInfo.setVisibility(View.GONE);
         gestureIndicator.setVisibility(View.VISIBLE);
         handler.removeCallbacks(hideIndicator);
     }
