@@ -12,7 +12,7 @@ android {
         minSdk 24            // minimum untuk Chaquopy 17
         targetSdk 35
         // naik otomatis di GitHub Actions supaya APK baru bisa menimpa yang lama
-        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
         versionName "1.0"
 
         ndk {
