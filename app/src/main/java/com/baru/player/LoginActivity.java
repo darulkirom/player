@@ -3,6 +3,7 @@ package com.baru.player;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.webkit.CookieManager;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -98,7 +99,24 @@ public class LoginActivity extends AppCompatActivity {
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(web, true);
 
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            /**
+             * TikTok/Instagram/dll kadang nyoba redirect ke skema khusus app
+             * (mis. "snssdk1180://...", "intent://...") buat buka app aslinya.
+             * WebView tidak bisa memuat itu dan berakhir di error
+             * "net::ERR_UNKNOWN_URL_SCHEME", memutus proses login sebelum
+             * cookie session sempat terbentuk. Abaikan saja skema non-http(s)
+             * supaya WebView tetap di halaman login web.
+             */
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    return false; // biarkan WebView yang muat seperti biasa
+                }
+                return true; // abaikan skema app-only, jangan sampai nyasar
+            }
+        });
         web.loadUrl(loginUrl(site));
 
         findViewById(R.id.btn_done).setOnClickListener(v -> exportCookies());

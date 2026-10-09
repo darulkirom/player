@@ -37,7 +37,9 @@ chaquopy {
     defaultConfig {
         version = "3.13"
         pip {
-            install "yt-dlp"
+            // Dikunci ke versi yang sama dengan yt-dlp di Termux (cek: yt-dlp --version)
+            // supaya perilaku ekstraksinya identik dan tidak kena bug versi yang beda.
+            install "yt-dlp==2026.08.19"
             install "yt-dlp-ejs"
         }
     }
