@@ -16,20 +16,23 @@ import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.TrackSelectionDialogBuilder;
 
+import java.io.File;
+
 public class PlayerActivity extends AppCompatActivity {
+
+    // --- KONSTANTA INTENT UNTUK MAINACTIVITY ---
+    public static final String EXTRA_OPTIONS = "EXTRA_OPTIONS";
+    public static final String EXTRA_INDEX = "EXTRA_INDEX";
+    public static final String EXTRA_TITLE = "EXTRA_TITLE";
 
     private ExoPlayer player;
     private PlayerView playerView;
-    
-    // Server internal & gesture view bawaan proyek Anda
-    private LocalServer localServer;
-    private GestureRingView gestureView;
     private boolean isLocked = false;
 
     // Status Resize Mode
     private int currentResizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT;
 
-    // Tombol-tombol kontrol
+    // Tombol UI Control
     private ImageButton btnVideoTracks;
     private ImageButton btnAudioTracks;
     private ImageButton btnSubtitleTracks;
@@ -46,18 +49,21 @@ public class PlayerActivity extends AppCompatActivity {
 
         playerView = findViewById(R.id.player_view);
 
-        // Inisialisasi Player Media3
+        // 1. Inisialisasi Player Media3
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
 
-        // Inisialisasi LocalServer bawaan proyek Anda
-        localServer = new LocalServer(this);
-        localServer.start();
+        // 2. Jalankan LocalServer Menggunakan Singleton bawaan
+        File serverRoot = getCacheDir(); // Folder penyimpanan master .m3u8
+        boolean serverRunning = LocalServer.ensureStarted(serverRoot);
+        if (!serverRunning) {
+            Toast.makeText(this, "Gagal menjalankan LocalServer internal", Toast.LENGTH_SHORT).show();
+        }
 
-        // Inisialisasi tombol & fitur UI
+        // 3. Inisialisasi Tombol Kontrol
         initControls();
 
-        // Tangani Intent (Internal dari MainActivity & Eksternal dari File Manager/Browser)
+        // 4. Tangani Intent yang Masuk
         handleIncomingIntent(getIntent());
     }
 
@@ -66,11 +72,11 @@ public class PlayerActivity extends AppCompatActivity {
 
         Uri videoUri = null;
 
-        // 1. Dari aplikasi luar (ACTION_VIEW)
+        // Intent dari Aplikasi Luar (File Manager/Browser)
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             videoUri = intent.getData();
         } 
-        // 2. Dari internal MainActivity
+        // Intent Internal dari MainActivity
         else if (intent.hasExtra("VIDEO_URL")) {
             String urlString = intent.getStringExtra("VIDEO_URL");
             if (urlString != null && !urlString.isEmpty()) {
@@ -94,7 +100,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void initControls() {
-        // --- DIALOG MEDIA3 (Track Selection) ---
+        // --- DIALOG TRACK MEDIA3 ---
         btnVideoTracks = findViewById(R.id.btn_video_tracks);
         if (btnVideoTracks != null) {
             btnVideoTracks.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_VIDEO, "Pilih Kualitas Video"));
@@ -110,7 +116,7 @@ public class PlayerActivity extends AppCompatActivity {
             btnSubtitleTracks.setOnClickListener(v -> showTrackSelectionDialog(C.TRACK_TYPE_TEXT, "Pilih Subtitle"));
         }
 
-        // --- FITUR RESIZE MODE (FIT -> FILL -> ZOOM) ---
+        // --- RESIZE MODE (FIT -> FILL -> ZOOM) ---
         btnResizeMode = findViewById(R.id.btn_resize_mode);
         if (btnResizeMode != null) {
             btnResizeMode.setOnClickListener(v -> toggleResizeMode());
@@ -127,7 +133,7 @@ public class PlayerActivity extends AppCompatActivity {
             btnUnlock.setOnClickListener(v -> setScreenLocked(false));
         }
 
-        // --- FITUR PIP & ROTASI LAYAR ---
+        // --- PIP & ROTASI LAYAR (Null-Safe) ---
         btnPip = findViewById(R.id.btn_pip);
         if (btnPip != null) {
             btnPip.setOnClickListener(v -> {
@@ -153,17 +159,12 @@ public class PlayerActivity extends AppCompatActivity {
     private void showTrackSelectionDialog(int trackType, String title) {
         if (player == null) return;
 
-        new TrackSelectionDialogBuilder(
-                this,
-                title,
-                player,
-                trackType
-        )
-        .setAllowAdaptiveSelections(true)
-        .setShowDisableOption(true)
-        .setTheme(R.style.TrackSelectionDialogTheme)
-        .build()
-        .show();
+        new TrackSelectionDialogBuilder(this, title, player, trackType)
+                .setAllowAdaptiveSelections(true)
+                .setShowDisableOption(true)
+                .setTheme(R.style.TrackSelectionDialogTheme)
+                .build()
+                .show();
     }
 
     private void toggleResizeMode() {
@@ -205,9 +206,6 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (localServer != null) {
-            localServer.stop();
-        }
         if (player != null) {
             player.release();
             player = null;
