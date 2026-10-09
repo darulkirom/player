@@ -35,6 +35,21 @@
             android:src="@drawable/ic_settings" />
 
         <ImageButton
+    android:id="@+id/btn_pip"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:src="@drawable/ic_pip" />
+
+<ImageButton
+    android:id="@+id/btn_rotate"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:src="@drawable/ic_screen_rotation" />
+            
+
+        <ImageButton
             android:id="@+id/btn_resize_mode"
             android:layout_width="48dp"
             android:layout_height="48dp"
