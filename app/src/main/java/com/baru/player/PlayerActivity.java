@@ -115,7 +115,8 @@ public class PlayerActivity extends AppCompatActivity {
     private ProgressBar gestureBar;
     private TextView gestureText;
     private AudioManager audio;
-    private final Runnable hideIndicator = () -> gestureIndicator.setVisibility(View.GONE);
+    private final Runnable hideIndicator = () -> gestureIndicator.animate().alpha(0f).setDuration(250)
+            .withEndAction(() -> gestureIndicator.setVisibility(View.GONE)).start();
     private float gStartX;
     private float gStartY;
     private int gMode;          // 0 belum ditentukan, 1 kecerahan, 2 volume, -1 diabaikan
@@ -340,6 +341,7 @@ public class PlayerActivity extends AppCompatActivity {
                     gActive = false;
                     gMode = 0;
                     if (was) {
+                        playerView.setControllerAutoShow(true);
                         if (e.getActionMasked() == MotionEvent.ACTION_UP
                                 && finishedMode == 3 && player != null && gSeekDuration > 0) {
                             player.seekTo(Math.max(0L, Math.min(gPreviewPosition, gSeekDuration)));
@@ -356,6 +358,9 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void beginGesture() {
+        // Sembunyikan kontrol lain supaya hanya lingkaran indikator yang terlihat
+        playerView.hideController();
+        playerView.setControllerAutoShow(false);
         if (gMode == 3) {
             if (player == null) {
                 gSeekDuration = 0;
@@ -397,6 +402,8 @@ public class PlayerActivity extends AppCompatActivity {
         gestureBar.setProgress((int) (gPreviewPosition * 100L / Math.max(1L, gSeekDuration)));
         gestureText.setText(sign + formatGestureTime(Math.abs(diff)) + "  •  "
                 + formatGestureTime(gPreviewPosition) + " / " + formatGestureTime(gSeekDuration));
+        gestureIndicator.animate().cancel();
+        gestureIndicator.setAlpha(1f);
         gestureIndicator.setVisibility(View.VISIBLE);
         handler.removeCallbacks(hideIndicator);
     }
@@ -416,13 +423,18 @@ public class PlayerActivity extends AppCompatActivity {
             WindowManager.LayoutParams lp = getWindow().getAttributes();
             lp.screenBrightness = b;
             getWindow().setAttributes(lp);
-            showIndicator(R.drawable.ic_brightness, Math.round(b * 100));
+            showIndicator(b < 0.33f ? R.drawable.ic_brightness_low
+                    : b < 0.66f ? R.drawable.ic_brightness_medium
+                    : R.drawable.ic_brightness_high, Math.round(b * 100));
         } else if (gMode == 2) {
             float vf = Math.max(0f, Math.min(gMaxVolume, gStartVolume + delta * gMaxVolume));
             int idx = Math.round(vf);
             audio.setStreamVolume(AudioManager.STREAM_MUSIC, idx, 0);
-            showIndicator(idx == 0 ? R.drawable.ic_volume_off : R.drawable.ic_volume_up,
-                    Math.round(idx * 100f / gMaxVolume));
+            float lv = idx / (float) gMaxVolume;
+            showIndicator(idx == 0 ? R.drawable.ic_volume_off
+                    : lv <= 0.33f ? R.drawable.ic_volume_mute
+                    : lv <= 0.66f ? R.drawable.ic_volume_down
+                    : R.drawable.ic_volume_up, Math.round(lv * 100));
         }
     }
 
@@ -431,6 +443,8 @@ public class PlayerActivity extends AppCompatActivity {
         gestureRing.setProgress(percent);
         gestureCircle.setVisibility(View.VISIBLE);
         gestureSeekInfo.setVisibility(View.GONE);
+        gestureIndicator.animate().cancel();
+        gestureIndicator.setAlpha(1f);
         gestureIndicator.setVisibility(View.VISIBLE);
         handler.removeCallbacks(hideIndicator);
     }

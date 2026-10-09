@@ -31,16 +31,22 @@ public final class GestureRingView extends View {
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float cx = getWidth() / 2f, cy = getHeight() / 2f;
-        float radius = Math.min(cx, cy) - 4f * density;
+        float stroke = 4f * density;
+        float discRadius = Math.min(cx, cy) - 2f * density;
+
+        // cakram abu-abu transparan
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(0x66000000);
-        canvas.drawCircle(cx, cy, radius - 2f * density, paint);
+        paint.setColor(0x73000000);
+        canvas.drawCircle(cx, cy, discRadius, paint);
+
+        // busur putih tepat di tepi cakram: mulai jam 12, searah jarum jam
+        if (progress <= 0f) return;
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(3.5f * density);
+        paint.setStrokeWidth(stroke);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setColor(0xFFFFFFFF);
-        float inset = 4.5f * density;
-        arcBounds.set(cx - radius + inset, cy - radius + inset, cx + radius - inset, cy + radius - inset);
+        float r = discRadius - stroke / 2f;
+        arcBounds.set(cx - r, cy - r, cx + r, cy + r);
         canvas.drawArc(arcBounds, -90f, 360f * progress / 100f, false, paint);
     }
 }
