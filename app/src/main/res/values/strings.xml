@@ -80,4 +80,17 @@
     <string name="cd_lainnya">Tombol lainnya</string>
     <string name="cd_kurangi">Kembali</string>
     <string name="cd_subtitle">Subtitle</string>
+    <string name="settings_title">Settings</string>
+    <string name="set_appearance">Appearance</string>
+    <string name="set_appearance_desc">Customize theme and style preferences for the app\'s visual appearance.</string>
+    <string name="set_playlist">Playlist and Channel</string>
+    <string name="set_playlist_desc">Control visibility of playlist URI and channel images.</string>
+    <string name="set_general">General</string>
+    <string name="set_general_desc">Toggle options for PiP mode, silence skipping, fullscreen player, and gesture controls.</string>
+    <string name="set_advance">Advance Video &amp; render options</string>
+    <string name="set_advance_desc">Configure decoder priority, tunneling, and DV7 to HEVC mapping for advanced playback options.</string>
+    <string name="set_shortcuts">Shortcuts</string>
+    <string name="set_shortcuts_desc">Access captioning settings.</string>
+    <string name="pengaturan_app">Settings</string>
+    <string name="segera_hadir">Belum tersedia</string>
 </resources>

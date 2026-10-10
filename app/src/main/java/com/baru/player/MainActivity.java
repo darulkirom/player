@@ -76,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Ui.applySystemBarPadding(findViewById(R.id.root));
+        findViewById(R.id.btn_settings).setOnClickListener(
+                v -> startActivity(new Intent(this, SettingsActivity.class)));
 
         spPlatform = findViewById(R.id.sp_platform);
         etUrl = findViewById(R.id.et_url);
