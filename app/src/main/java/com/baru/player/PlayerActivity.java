@@ -2,8 +2,8 @@ package com.baru.player;
 
 import android.app.Dialog;
 import androidx.annotation.OptIn;
-import androidx.media3.common.util.UnstableApi;
-import androidx.media3.ui.TrackSelectionDialogBuilder;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.ui.TrackSelectionView;
 import android.app.PictureInPictureParams;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -669,15 +669,74 @@ public class PlayerActivity extends AppCompatActivity {
         showPill(getResources().getStringArray(R.array.resize_short)[resizeIdx], 0, false, 1000);
     }
 
-    /** Dialog pilih resolusi bawaan Media3 (radio: None / Auto / tiap resolusi). */
+    /**
+     * Dialog pilih trek memakai TrackSelectionView bawaan Media3, satu dialog dengan tab
+     * Video dan Audio (pola sama dengan app demo ExoPlayer). Pilihan diterapkan saat OKE.
+     */
     @OptIn(markerClass = UnstableApi.class)
     private void showTrackDialog() {
         if (player == null) return;
-        new TrackSelectionDialogBuilder(this, getString(R.string.kualitas), player, C.TRACK_TYPE_VIDEO)
-                .setShowDisableOption(true)
-                .setAllowAdaptiveSelections(true)
-                .build()
-                .show();
+        final int[] types = {C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO};
+        final TrackSelectionParameters params = player.getTrackSelectionParameters();
+        final Tracks tracks = player.getCurrentTracks();
+
+        final Dialog dlg = new Dialog(this);
+        dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        View root = getLayoutInflater().inflate(R.layout.dialog_tracks, null);
+        dlg.setContentView(root);
+
+        final TrackSelectionView[] views = {
+                root.findViewById(R.id.track_view_video), root.findViewById(R.id.track_view_audio)};
+        final View[] panels = {
+                root.findViewById(R.id.track_panel_video), root.findViewById(R.id.track_panel_audio)};
+        final TextView[] tabs = {root.findViewById(R.id.tab_video), root.findViewById(R.id.tab_audio)};
+
+        for (int k = 0; k < 2; k++) {
+            List<Tracks.Group> groups = new ArrayList<>();
+            for (Tracks.Group g : tracks.getGroups()) {
+                if (g.getType() == types[k]) groups.add(g);
+            }
+            Map<TrackGroup, TrackSelectionOverride> overrides = new HashMap<>();
+            for (TrackSelectionOverride o : params.overrides.values()) {
+                if (o.getType() == types[k]) overrides.put(o.mediaTrackGroup, o);
+            }
+            views[k].setShowDisableOption(true);        // None
+            views[k].setAllowAdaptiveSelections(true);  // Auto
+            views[k].init(groups, params.disabledTrackTypes.contains(types[k]),
+                    overrides, null, null);
+        }
+
+        final Runnable[] showTab = new Runnable[1];
+        final int[] cur = {0};
+        showTab[0] = () -> {
+            for (int t = 0; t < 2; t++) {
+                panels[t].setVisibility(t == cur[0] ? View.VISIBLE : View.GONE);
+                tabs[t].setTextColor(t == cur[0] ? 0xFFFFFFFF : 0x99FFFFFF);
+                int flags = tabs[t].getPaintFlags();
+                tabs[t].setPaintFlags(t == cur[0] ? flags | Paint.UNDERLINE_TEXT_FLAG
+                        : flags & ~Paint.UNDERLINE_TEXT_FLAG);
+            }
+        };
+        tabs[0].setOnClickListener(v -> { cur[0] = 0; showTab[0].run(); });
+        tabs[1].setOnClickListener(v -> { cur[0] = 1; showTab[0].run(); });
+        showTab[0].run();
+
+        root.findViewById(R.id.track_cancel).setOnClickListener(v -> dlg.dismiss());
+        root.findViewById(R.id.track_ok).setOnClickListener(v -> {
+            TrackSelectionParameters.Builder b = player.getTrackSelectionParameters().buildUpon();
+            for (int k = 0; k < 2; k++) {
+                b.setTrackTypeDisabled(types[k], views[k].getIsDisabled());
+                b.clearOverridesOfType(types[k]);
+                for (TrackSelectionOverride o : views[k].getOverrides().values()) b.addOverride(o);
+            }
+            player.setTrackSelectionParameters(b.build());
+            dlg.dismiss();
+        });
+
+        dlg.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dlg.show();
+        int w = Math.min(dp(420), (int) (getResources().getDisplayMetrics().widthPixels * 0.9f));
+        dlg.getWindow().setLayout(w, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     // ---------------------------------------------------------------- player
