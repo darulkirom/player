@@ -77,7 +77,9 @@ import androidx.media3.ui.PlayerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import com.chaquo.python.Python;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -168,6 +170,10 @@ public class PlayerActivity extends AppCompatActivity {
     private long resumePos;
     private int resizeIdx;
     private int orientIdx;
+    private ImageButton rotateBtn;
+    private TextView titleView;
+    private String pendingLink;   // link dari menu Bagikan, belum dianalisis
+    private boolean started;
 
     // ------------------------------------------------------------ lifecycle
 
@@ -194,7 +200,7 @@ public class PlayerActivity extends AppCompatActivity {
         // tampilan kontrol (player_controls.xml) ada di dalam PlayerView
         View topControls = playerView.findViewById(R.id.topControls);
         View bottomBar = playerView.findViewById(R.id.exo_bottom_bar);
-        TextView titleView = playerView.findViewById(R.id.titleTextView);
+        titleView = playerView.findViewById(R.id.titleTextView);
         muteBtn = playerView.findViewById(R.id.exo_mute);
         qualityBtn = playerView.findViewById(R.id.exo_select_track);
         resizeText = playerView.findViewById(R.id.exo_resizeTextView);
@@ -202,8 +208,13 @@ public class PlayerActivity extends AppCompatActivity {
 
         String intentTitle = null;
         try {
-            Uri external = externalVideoUri(getIntent());
-            if (external != null) {
+            String link = sharedLink(getIntent());
+            Uri external = link == null ? externalVideoUri(getIntent()) : null;
+            if (link != null) {
+                // Link dari menu "Bagikan": ambil info dengan yt-dlp lalu putar otomatis
+                pendingLink = link;
+                intentTitle = link;
+            } else if (external != null) {
                 // Dibuka dari aplikasi lain ("Buka dengan" / Bagikan): putar langsung
                 JSONObject o = new JSONObject();
                 o.put("kind", "single");
@@ -220,7 +231,7 @@ public class PlayerActivity extends AppCompatActivity {
                 current = getIntent().getIntExtra(EXTRA_INDEX, 0);
                 if (current < 0 || current >= options.size()) current = 0;
             }
-            if (options.isEmpty()) throw new IllegalStateException();
+            if (options.isEmpty() && pendingLink == null) throw new IllegalStateException();
         } catch (Exception e) {
             Toast.makeText(this, R.string.opsi_tidak_valid, Toast.LENGTH_LONG).show();
             finish();
@@ -236,7 +247,8 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.findViewById(R.id.lock_player).setOnClickListener(v -> setLocked(true));
         muteBtn.setOnClickListener(v -> toggleMute());
         qualityBtn.setOnClickListener(v -> showTrackDialog());
-        playerView.findViewById(R.id.exo_screen_rotate).setOnClickListener(v -> showOrientationDialog());
+        rotateBtn = playerView.findViewById(R.id.exo_screen_rotate);
+        rotateBtn.setOnClickListener(v -> cycleOrientation());
         resizeText.setOnClickListener(v -> toggleFitZoom());
         resizeText.setOnLongClickListener(v -> { showResizeDialog(); return true; });
         pill.setOnClickListener(v -> { if (locked) setLocked(false); });
@@ -257,17 +269,21 @@ public class PlayerActivity extends AppCompatActivity {
         applyFullscreen();
         applyResize();
         applyOrientation();
+
+        if (pendingLink != null) analyzeLink(pendingLink);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        started = true;
         if (player == null && !options.isEmpty()) initPlayer();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        started = false;
         handler.removeCallbacks(hideIndicator);
         handler.removeCallbacks(endFastSeek);
         fastSeekOverlay.hideNow();
@@ -307,8 +323,15 @@ public class PlayerActivity extends AppCompatActivity {
         resizeText.setText(getResources().getStringArray(R.array.resize_short)[resizeIdx]);
     }
 
+    private static final int[] ORIENT_ICONS = {
+            R.drawable.ic_screen_rotation,   // Auto
+            R.drawable.ic_crop_landscape,    // Lanskap
+            R.drawable.ic_crop_portrait      // Potret
+    };
+
     private void applyOrientation() {
         setRequestedOrientation(ORIENTATIONS[orientIdx]);
+        if (rotateBtn != null) rotateBtn.setImageResource(ORIENT_ICONS[orientIdx]);
     }
 
     private void showResizeDialog() {
@@ -323,16 +346,11 @@ public class PlayerActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showOrientationDialog() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.rotasi)
-                .setSingleChoiceItems(R.array.orientasi, orientIdx, (d, which) -> {
-                    orientIdx = which;
-                    prefs.edit().putInt("orient", which).apply();
-                    applyOrientation();
-                    d.dismiss();
-                })
-                .show();
+    private void cycleOrientation() {
+        orientIdx = (orientIdx + 1) % ORIENTATIONS.length;
+        prefs.edit().putInt("orient", orientIdx).apply();
+        applyOrientation();
+        showPill(getResources().getStringArray(R.array.orientasi)[orientIdx], 0, false, 1000);
     }
 
     // ------------------------------------------- gesture volume & kecerahan
@@ -904,6 +922,65 @@ public class PlayerActivity extends AppCompatActivity {
                 .setDefaultRequestProperties(toMap(headers));
         // DefaultDataSource: http(s) lewat factory di atas, file:// untuk master .m3u8 lokal
         return new DefaultDataSource.Factory(this, http);
+    }
+
+    /** Link dari menu "Bagikan" (teks biasa), atau null. */
+    private static String sharedLink(Intent i) {
+        if (Intent.ACTION_SEND.equals(i.getAction()) && i.getType() != null
+                && i.getType().startsWith("text/")) {
+            String t = i.getStringExtra(Intent.EXTRA_TEXT);
+            if (t != null && !t.trim().isEmpty()) return HomeFragment.extractUrl(t);
+        }
+        return null;
+    }
+
+    /** Analisis link di thread terpisah (platform "5" = otomatis), lalu putar pilihan pertama. */
+    private void analyzeLink(final String url) {
+        showPill(getString(R.string.mengambil_info), 0, false, 180_000);
+        final File dir = new File(getFilesDir(), "cookies");
+        dir.mkdirs();
+        final String cDir = dir.getAbsolutePath();
+        File qjs = new File(getApplicationInfo().nativeLibraryDir, "libqjs.so");
+        final String js = qjs.isFile() ? qjs.getAbsolutePath() : "";
+        new Thread(() -> {
+            String json;
+            try {
+                json = Python.getInstance().getModule("baru_core")
+                        .callAttr("analyze", url, "5", cDir, cDir, js).toString();
+            } catch (Throwable t) {
+                json = "{\"ok\":false,\"error\":" + JSONObject.quote(String.valueOf(t)) + "}";
+            }
+            final String res = json;
+            runOnUiThread(() -> onLinkAnalyzed(res));
+        }).start();
+    }
+
+    private void onLinkAnalyzed(String json) {
+        if (isFinishing() || isDestroyed()) return;
+        handler.removeCallbacks(hidePill);
+        pill.animate().cancel();
+        pill.setVisibility(View.GONE);
+        try {
+            JSONObject r = new JSONObject(json);
+            if (r.optBoolean("ok")) {
+                JSONArray arr = r.getJSONArray("options");
+                for (int i = 0; i < arr.length(); i++) options.add(arr.getJSONObject(i));
+                if (options.isEmpty()) throw new JSONException("kosong");
+                current = 0; // urutan dari baru_core: pilihan terbaik untuk platform otomatis di depan
+                String t = r.optString("title", "");
+                if (!t.isEmpty()) titleView.setText(t);
+                pendingLink = null;
+                if (started && player == null) initPlayer();
+                return;
+            }
+            String msg = r.optBoolean("need_cookie")
+                    ? getString(R.string.butuh_cookie_toast)
+                    : r.optString("error", getString(R.string.opsi_tidak_valid));
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+        } catch (JSONException e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+        }
+        finish();
     }
 
     /** Uri video dari intent aplikasi lain (VIEW atau Bagikan), atau null kalau dari MainActivity. */

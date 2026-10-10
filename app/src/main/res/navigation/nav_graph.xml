@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.baru.player.HomeFragment"
+        android:label="@string/nav_home" />
+    <fragment
+        android:id="@+id/localFragment"
+        android:name="com.baru.player.LocalFragment"
+        android:label="@string/nav_local" />
+    <fragment
+        android:id="@+id/samplesFragment"
+        android:name="com.baru.player.PlaceholderFragment"
+        android:label="@string/nav_samples" />
+    <fragment
+        android:id="@+id/playlistFragment"
+        android:name="com.baru.player.PlaceholderFragment"
+        android:label="@string/nav_playlist" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.baru.player.SettingsFragment"
+        android:label="@string/nav_settings" />
+</navigation>
