@@ -133,9 +133,6 @@
     <color name="ignite_blaze_md_theme_surfaceVariant">#5b4039</color>
     <color name="ignite_blaze_md_theme_tertiary">#ffca97</color>
     <color name="ignite_blaze_md_theme_tertiaryContainer">#f69300</color>
-    <color name="material_timepicker_button_stroke">res/color-night-v8/material_timepicker_button_stroke.xml</color>
-    <color name="material_timepicker_clockface">res/color-night-v8/material_timepicker_clockface.xml</color>
-    <color name="material_timepicker_modebutton_tint">res/color-night-v8/material_timepicker_modebutton_tint.xml</color>
     <color name="red_rose_md_theme_background">#1f0f11</color>
     <color name="red_rose_md_theme_error">#ffb3af</color>
     <color name="red_rose_md_theme_inverseOnSurface">#3f2b2d</color>

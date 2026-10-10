@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8' ?>
 <resources>
-    <style name="Base.DarkTheme.NetworkStream" parent="@style/Theme.Material3.Dark.NoActionBar">
+    <style name="Base.DarkTheme.App" parent="@style/Theme.Material3.Dark.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">?attr/colorSurfaceContainer</item>
         <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
     </style>
-    <style name="Theme.NetworkStream.DynamicTheme" parent="@style/ThemeOverlay.Material3.DynamicColors.Dark" />
-    <style name="Theme.NetworkStream.EarthenElegance" parent="@style/Base.DarkTheme.NetworkStream">
+    <style name="Theme.App.DynamicTheme" parent="@style/ThemeOverlay.Material3.DynamicColors.Dark" />
+    <style name="Theme.App.EarthenElegance" parent="@style/Base.DarkTheme.App">
         <item name="android:colorBackground">@color/earthen_elegance_md_theme_background</item>
         <item name="colorError">@color/earthen_elegance_md_theme_error</item>
         <item name="colorErrorContainer">@color/earthen_elegance_md_theme_errorContainer</item>
@@ -54,7 +54,7 @@
         <item name="colorTertiaryFixed">@color/earthen_elegance_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/earthen_elegance_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.NetworkStream.EnchantedGrove" parent="@style/Base.DarkTheme.NetworkStream">
+    <style name="Theme.App.EnchantedGrove" parent="@style/Base.DarkTheme.App">
         <item name="android:colorBackground">@color/enchanted_grove_md_theme_background</item>
         <item name="colorError">@color/enchanted_grove_md_theme_error</item>
         <item name="colorErrorContainer">@color/enchanted_grove_md_theme_errorContainer</item>
@@ -102,7 +102,7 @@
         <item name="colorTertiaryFixed">@color/enchanted_grove_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/enchanted_grove_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.NetworkStream.FrostyAura" parent="@style/Base.DarkTheme.NetworkStream">
+    <style name="Theme.App.FrostyAura" parent="@style/Base.DarkTheme.App">
         <item name="android:colorBackground">@color/frosty_aura_md_theme_background</item>
         <item name="colorError">@color/frosty_aura_md_theme_error</item>
         <item name="colorErrorContainer">@color/frosty_aura_md_theme_errorContainer</item>
@@ -150,7 +150,7 @@
         <item name="colorTertiaryFixed">@color/frosty_aura_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/frosty_aura_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.NetworkStream.IgniteBlaze" parent="@style/Base.DarkTheme.NetworkStream">
+    <style name="Theme.App.IgniteBlaze" parent="@style/Base.DarkTheme.App">
         <item name="android:colorBackground">@color/ignite_blaze_md_theme_background</item>
         <item name="colorError">@color/ignite_blaze_md_theme_error</item>
         <item name="colorErrorContainer">@color/ignite_blaze_md_theme_errorContainer</item>
@@ -198,7 +198,7 @@
         <item name="colorTertiaryFixed">@color/ignite_blaze_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/ignite_blaze_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.NetworkStream.RedRose" parent="@style/Base.DarkTheme.NetworkStream">
+    <style name="Theme.App.RedRose" parent="@style/Base.DarkTheme.App">
         <item name="android:colorBackground">@color/red_rose_md_theme_background</item>
         <item name="colorError">@color/red_rose_md_theme_error</item>
         <item name="colorErrorContainer">@color/red_rose_md_theme_errorContainer</item>
