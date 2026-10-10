@@ -2,7 +2,6 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
-        app:fragment="com.baru.player.AppearanceFragment"
         app:icon="@drawable/ic_palette"
         app:key="appearance"
         app:summary="@string/set_appearance_desc"

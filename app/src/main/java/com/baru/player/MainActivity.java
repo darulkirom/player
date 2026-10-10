@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -27,10 +28,39 @@ public class MainActivity extends AppCompatActivity {
                 .findFragmentById(R.id.main_nav_host);
         nav = host.getNavController();
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        NavigationUI.setupWithNavController(bottomNav, nav);
+        setupBottomNav(bottomNav);
         NavigationUI.setupActionBarWithNavController(this, nav,
                 new AppBarConfiguration.Builder(R.id.homeFragment, R.id.localFragment,
                         R.id.samplesFragment, R.id.playlistFragment, R.id.settingsFragment).build());
+    }
+
+    /**
+     * Navigasi bawah diatur manual (bukan NavigationUI.setupWithNavController) supaya:
+     * - layar rincian seperti Appearance tetap menyalakan tab Settings, dan
+     * - mengetuk tab lain benar-benar pindah layar (tanpa simpan/pulihkan back stack per tab,
+     *   yang membuat isi layar tidak berganti sementara tab sudah menyala).
+     */
+    private void setupBottomNav(BottomNavigationView bottomNav) {
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.homeFragment) {
+                return nav.popBackStack(R.id.homeFragment, false);
+            }
+            nav.navigate(id, null, new NavOptions.Builder()
+                    .setLaunchSingleTop(true)
+                    .setPopUpTo(R.id.homeFragment, false)
+                    .build());
+            return true;
+        });
+        // ketuk tab yang sedang aktif = kembali ke layar utama tab itu (mis. dari Appearance ke Settings)
+        bottomNav.setOnItemReselectedListener(item -> nav.popBackStack(item.getItemId(), false));
+
+        nav.addOnDestinationChangedListener((controller, dest, args) -> {
+            int tab = dest.getId() == R.id.appearanceFragment ? R.id.settingsFragment : dest.getId();
+            if (bottomNav.getMenu().findItem(tab) != null) {
+                bottomNav.getMenu().findItem(tab).setChecked(true);
+            }
+        });
     }
 
     /**
