@@ -37,8 +37,6 @@
     </string-array>
     <string-array name="resize_modes">
         <item>Sesuai rasio (Fit)</item>
-        <item>Isi lebar</item>
-        <item>Isi tinggi</item>
         <item>Isi layar, diregangkan (Fill)</item>
         <item>Isi layar, terpotong (Zoom)</item>
     </string-array>
@@ -50,8 +48,6 @@
     <string name="cd_pengaturan">Pengaturan (kecepatan, audio)</string>
     <string-array name="resize_short">
         <item>Fit</item>
-        <item>Lebar</item>
-        <item>Tinggi</item>
         <item>Fill</item>
         <item>Zoom</item>
     </string-array>

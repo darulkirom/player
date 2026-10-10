@@ -1,0 +1,17 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/progress">
+        <rotate
+            android:fromDegrees="270"
+            android:pivotX="50%"
+            android:pivotY="50%"
+            android:toDegrees="270">
+            <shape
+                android:innerRadiusRatio="2.13"
+                android:shape="ring"
+                android:thicknessRatio="32"
+                android:useLevel="true">
+                <solid android:color="#FFFFFFFF" />
+            </shape>
+        </rotate>
+    </item>
+</layer-list>

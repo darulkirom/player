@@ -1,62 +1,211 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#80000000">
-
-    <!-- Control Bar Atas -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <FrameLayout
+        android:layout_gravity="center"
+        android:id="@+id/exo_controls_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layoutDirection="ltr">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:orientation="horizontal"
+            android:id="@+id/topControls"
+            android:background="@drawable/bg_gradient_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toStartOf="@+id/lock_player"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+                <ImageButton
+                    android:id="@+id/back_button"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:padding="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_close"
+                    android:contentDescription="player_controls_exit" />
+                <Space
+                    android:layout_width="16dp"
+                    android:layout_height="0dp" />
+                <TextView
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:ellipsize="marquee"
+                    android:layout_gravity="center_vertical"
+                    android:id="@+id/titleTextView"
+                    android:fadingEdge="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:layout_marginEnd="16dp" />
+            </LinearLayout>
+            <ImageButton
+                android:layout_gravity="end"
+                android:id="@+id/lock_player"
+                android:background="?android:attr/selectableItemBackground"
+                android:padding="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_lock_open"
+                android:contentDescription="select_lock"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+    <FrameLayout
+        android:layout_gravity="bottom"
+        android:id="@+id/exo_bottom_bar"
+        android:background="@color/ui_controls_background"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/exo_styled_bottom_bar_height"
+        android:layout_marginTop="@dimen/exo_styled_bottom_bar_margin_top"
+        android:layoutDirection="ltr">
+        <LinearLayout
+            android:layout_gravity="start|center_vertical"
+            android:id="@+id/exo_time"
+            android:paddingLeft="@dimen/exo_styled_bottom_bar_time_padding"
+            android:paddingRight="@dimen/exo_styled_bottom_bar_time_padding"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layoutDirection="ltr"
+            android:paddingStart="@dimen/exo_styled_bottom_bar_time_padding"
+            android:paddingEnd="@dimen/exo_styled_bottom_bar_time_padding">
+            <TextView
+                android:id="@+id/exo_position"
+                style="@style/ExoStyledControls.TimeText.Position" />
+            <TextView
+                style="@style/ExoStyledControls.TimeText.Separator" />
+            <TextView
+                android:id="@+id/exo_duration"
+                style="@style/ExoStyledControls.TimeText.Duration" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_gravity="end|center_vertical"
+            android:id="@+id/exo_basic_controls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layoutDirection="ltr">
+            <TextView
+                android:id="@+id/exo_resizeTextView"
+                style="@style/ExoStyledControls.Button.Bottom.Resize" />
+            <ImageButton
+                android:id="@+id/exo_subtitle"
+                style="@style/ExoStyledControls.Button.Bottom.CC" />
+            <ImageButton
+                android:id="@+id/exo_settings"
+                style="@style/ExoStyledControls.Button.Bottom.Settings" />
+            <ImageButton
+                android:id="@+id/exo_mute"
+                style="@style/ExoStyledControls.Button.Bottom.Volume" />
+            <ImageButton
+                android:id="@+id/exo_select_track"
+                style="@style/ExoStyledControls.Button.Bottom.Video" />
+            <ImageButton
+                android:id="@+id/exo_pip"
+                style="@style/ExoStyledControls.Button.Bottom.PIP" />
+            <ImageButton
+                android:id="@+id/exo_screen_rotate"
+                android:contentDescription="@string/rotasi"
+                android:src="@drawable/ic_screen_rotation"
+                style="@style/ExoStyledControls.Button.Bottom.FullScreen" />
+            <ImageButton
+                android:id="@+id/exo_overflow_show"
+                style="@style/ExoStyledControls.Button.Bottom.OverflowShow" />
+        </LinearLayout>
+        <HorizontalScrollView
+            android:layout_gravity="end|center_vertical"
+            android:id="@+id/exo_extra_controls_scroll_view"
+            android:visibility="invisible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/exo_extra_controls"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layoutDirection="ltr">
+                <ImageButton
+                    android:id="@+id/exo_overflow_hide"
+                    style="@style/ExoStyledControls.Button.Bottom.OverflowHide" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </FrameLayout>
+    <androidx.media3.ui.DefaultTimeBar
+        android:layout_gravity="bottom"
+        android:id="@+id/exo_progress"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/exo_styled_progress_layout_height"
+        android:layout_marginBottom="@dimen/exo_styled_progress_margin_bottom"
+        app:ad_marker_width="@dimen/marker_width"
+        app:bar_gravity="center"
+        app:bar_height="@dimen/exo_styled_progress_bar_height"
+        app:scrubber_dragged_size="@dimen/exo_styled_progress_dragged_thumb_size"
+        app:scrubber_enabled_size="@dimen/exo_styled_progress_enabled_thumb_size"
+        app:touch_target_height="@dimen/exo_styled_progress_touch_target_height" />
     <LinearLayout
+        android:gravity="center_vertical"
+        android:layout_gravity="end|bottom"
+        android:orientation="horizontal"
+        android:id="@+id/exo_minimal_controls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:orientation="horizontal"
-        android:padding="16dp">
-
+        android:layout_marginBottom="@dimen/exo_styled_minimal_controls_margin_bottom"
+        android:layoutDirection="ltr">
         <ImageButton
-            android:id="@+id/btn_video_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_video_settings" />
-
-        <ImageButton
-            android:id="@+id/btn_subtitle_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_closed_caption" />
-
-        <ImageButton
-            android:id="@+id/btn_audio_tracks"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_settings" />
-
-        <ImageButton
-            android:id="@+id/btn_resize_mode"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_screen_rotation" />
-
-        <ImageButton
-            android:id="@+id/btn_lock"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_lock" />
+            android:id="@+id/exo_minimal_fullscreen"
+            style="@style/ExoStyledControls.Button.Bottom.FullScreen" />
     </LinearLayout>
-
-    <!-- Tombol Buka Kunci (Melayang di Pojok Kiri Atas saat terkunci) -->
-    <ImageButton
-        android:id="@+id/btn_unlock"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:visibility="gone"
-        android:background="@drawable/bg_pill"
-        android:src="@drawable/ic_lock_open" />
-
-</RelativeLayout>
+    <LinearLayout
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:id="@+id/exo_center_controls"
+        android:background="@android:color/transparent"
+        android:padding="@dimen/exo_styled_controls_padding"
+        android:clipToPadding="false"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layoutDirection="ltr">
+        <Button
+            android:id="@+id/exo_rew_with_amount"
+            android:background="@drawable/exo_styled_controls_rewind"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:singleLine="false"
+            style="@style/ExoStyledControls.Button.Center.RewWithAmount" />
+        <ImageButton
+            android:id="@+id/exo_play_pause"
+            style="@style/ExoStyledControls.Button.Center.PlayPause" />
+        <Button
+            android:id="@+id/exo_ffwd_with_amount"
+            android:background="@drawable/exo_styled_controls_fastforward"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:singleLine="false"
+            style="@style/ExoStyledControls.Button.Center.FfwdWithAmount" />
+    </LinearLayout>
+    <View
+        android:layout_gravity="top"
+        android:id="@+id/exo_top"
+        android:background="@color/ui_controls_background"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+    <View
+        android:layout_gravity="left"
+        android:id="@+id/exo_left"
+        android:background="@color/exo_black_opacity_70"
+        android:layout_width="0dp"
+        android:layout_height="match_parent" />
+    <View
+        android:layout_gravity="right"
+        android:id="@+id/exo_right"
+        android:background="@color/exo_black_opacity_70"
+        android:layout_width="0dp"
+        android:layout_height="match_parent" />
+</merge>

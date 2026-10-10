@@ -1,14 +1,43 @@
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">#212121</item>
-        <item name="colorPrimaryDark">#000000</item>
-        <item name="colorAccent">#FF4081</item>
+    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="PlayerTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
     </style>
 
-    <!-- Style Tema Dialog Media3 -->
-    <style name="TrackSelectionDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
-        <item name="android:windowBackground">@drawable/bg_dialog_dark</item>
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="colorAccent">#FF4081</item>
+    <!-- Tombol bawah pemutar (meniru layout referensi) -->
+    <style name="ExoStyledControls.Button.Bottom.Resize" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ExoStyledControls.Button.Bottom.Volume" parent="ExoStyledControls.Button.Bottom">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_volume_up</item>
+        <item name="android:contentDescription">@string/cd_bisu</item>
+    </style>
+    <style name="ExoStyledControls.Button.Bottom.Video" parent="ExoStyledControls.Button.Bottom">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_video_settings</item>
+        <item name="android:contentDescription">@string/kualitas</item>
+    </style>
+    <style name="ExoStyledControls.Button.Bottom.PIP" parent="ExoStyledControls.Button.Bottom">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_pip</item>
+        <item name="android:contentDescription">@string/cd_pip</item>
     </style>
 </resources>

@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@android:color/black"
+    android:keepScreenOn="true">
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
@@ -11,92 +12,78 @@
         android:layout_height="match_parent"
         app:controller_layout_id="@layout/player_controls"
         app:resize_mode="fit"
-        app:show_subtitle_button="true"
         app:show_buffering="when_playing"
+        app:show_subtitle_button="true"
         app:show_timeout="4000" />
 
-    <!-- Indikator gesture berada tepat di tengah layar, seperti player referensi -->
-    <FrameLayout
-        android:id="@+id/gesture_indicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone">
+    <!-- Indikator gestur volume / kecerahan: lingkaran di tengah layar -->
+    <RelativeLayout
+        android:id="@+id/gestureLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center">
 
-        <FrameLayout
-            android:id="@+id/gesture_circle"
-            android:layout_width="104dp"
-            android:layout_height="104dp"
-            android:layout_gravity="center">
-            <com.baru.player.GestureRingView
-                android:id="@+id/gesture_ring"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-            <ImageView
-                android:id="@+id/gesture_icon"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center"
-                android:contentDescription="@null"
-                android:tint="@android:color/white" />
-        </FrameLayout>
-
-        <LinearLayout
-            android:id="@+id/gesture_seek_info"
+        <RelativeLayout
+            android:id="@+id/volumeRelativeLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_indicator"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:padding="16dp"
+            android:layout_centerInParent="true"
+            android:background="@drawable/background_oval_black_transparent"
             android:visibility="gone">
-            <ImageView
-                android:id="@+id/gesture_seek_icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:contentDescription="@null"
-                android:tint="@android:color/white" />
-            <ProgressBar
-                android:id="@+id/gesture_bar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="140dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:max="100" />
-            <TextView
-                android:id="@+id/gesture_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@android:color/white"
-                android:textSize="14sp" />
-        </LinearLayout>
-    </FrameLayout>
 
-    <!-- Lapisan saat layar dikunci: ketuk untuk memunculkan tombol buka kunci -->
-    <FrameLayout
+            <ProgressBar
+                android:id="@+id/volumeProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:indeterminate="false"
+                android:max="100"
+                android:progressDrawable="@drawable/progress_circular_white" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/volumeImageView"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_centerInParent="true"
+                app:tint="@android:color/white" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/brightnessRelativeLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/background_oval_black_transparent"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/brightnessProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:indeterminate="false"
+                android:max="100"
+                android:progressDrawable="@drawable/progress_circular_white" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/brightnessImageView"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_centerInParent="true"
+                app:tint="@android:color/white" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <!-- Penutup saat layar dikunci -->
+    <View
         android:id="@+id/lock_layer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone">
+        android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/btn_unlock"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_gradient_top"
-            android:contentDescription="@string/cd_buka_kunci"
-            android:padding="10dp"
-            android:src="@drawable/ic_lock_open"
-            android:visibility="gone" />
-    </FrameLayout>
-
-    <!-- Pill info: Locked / Unlocked / Tap to Unlock / Fit / Zoom -->
+    <!-- Pill info: Locked / Unlocked / Tap to Unlock / Fit / Fill / Zoom / seek -->
     <TextView
         android:id="@+id/pill"
         android:layout_width="wrap_content"
