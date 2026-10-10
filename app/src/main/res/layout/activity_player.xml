@@ -74,6 +74,12 @@
         </RelativeLayout>
     </RelativeLayout>
 
+    <!-- Efek ketuk dua kali maju/mundur -->
+    <com.baru.player.FastSeekOverlay
+        android:id="@+id/fast_seek_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- Penutup saat layar dikunci -->
     <View
         android:id="@+id/lock_layer"

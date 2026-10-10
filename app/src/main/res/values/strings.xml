@@ -93,4 +93,5 @@
     <string name="set_shortcuts_desc">Access captioning settings.</string>
     <string name="pengaturan_app">Settings</string>
     <string name="segera_hadir">Belum tersedia</string>
+    <string name="fast_seek_seconds">%d seconds</string>
 </resources>

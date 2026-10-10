@@ -30,6 +30,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Rational;
+import android.content.Intent;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import androidx.core.content.IntentCompat;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -128,6 +133,19 @@ public class PlayerActivity extends AppCompatActivity {
     private ImageView volumeImage;
     private ImageView brightnessImage;
     private AudioManager audio;
+
+    // ketuk dua kali: maju/mundur beruntun (gaya YouTube)
+    private static final long FAST_SEEK_STEP_MS = 30_000L; // tiap ketukan = 30 detik
+    private FastSeekOverlay fastSeekOverlay;
+    private GestureDetector tapDetector;
+    private boolean fastSeekActive;
+    private boolean fastSeekForward;
+    private long fastSeekAccumMs;
+    private boolean swallowTouch;
+    private final Runnable endFastSeek = () -> {
+        fastSeekActive = false;
+        fastSeekAccumMs = 0;
+    };
     private final Runnable hideIndicator = () -> {
         fadeOut(volumeLayout);
         fadeOut(brightnessLayout);
@@ -172,6 +190,7 @@ public class PlayerActivity extends AppCompatActivity {
         volumeImage = findViewById(R.id.volumeImageView);
         brightnessImage = findViewById(R.id.brightnessImageView);
         pill = findViewById(R.id.pill);
+        fastSeekOverlay = findViewById(R.id.fast_seek_overlay);
         // tampilan kontrol (player_controls.xml) ada di dalam PlayerView
         View topControls = playerView.findViewById(R.id.topControls);
         View bottomBar = playerView.findViewById(R.id.exo_bottom_bar);
@@ -181,11 +200,26 @@ public class PlayerActivity extends AppCompatActivity {
         resizeText = playerView.findViewById(R.id.exo_resizeTextView);
         View pipBtn = playerView.findViewById(R.id.exo_pip);
 
+        String intentTitle = null;
         try {
-            JSONArray arr = new JSONArray(getIntent().getStringExtra(EXTRA_OPTIONS));
-            for (int i = 0; i < arr.length(); i++) options.add(arr.getJSONObject(i));
-            current = getIntent().getIntExtra(EXTRA_INDEX, 0);
-            if (current < 0 || current >= options.size()) current = 0;
+            Uri external = externalVideoUri(getIntent());
+            if (external != null) {
+                // Dibuka dari aplikasi lain ("Buka dengan" / Bagikan): putar langsung
+                JSONObject o = new JSONObject();
+                o.put("kind", "single");
+                o.put("url", external.toString());
+                o.put("label", "Langsung");
+                String type = getIntent().getType();
+                if (type != null && type.startsWith("application/")) o.put("mime", type); // m3u8 / mpd
+                options.add(o);
+                current = 0;
+                intentTitle = displayNameFor(external);
+            } else {
+                JSONArray arr = new JSONArray(getIntent().getStringExtra(EXTRA_OPTIONS));
+                for (int i = 0; i < arr.length(); i++) options.add(arr.getJSONObject(i));
+                current = getIntent().getIntExtra(EXTRA_INDEX, 0);
+                if (current < 0 || current >= options.size()) current = 0;
+            }
             if (options.isEmpty()) throw new IllegalStateException();
         } catch (Exception e) {
             Toast.makeText(this, R.string.opsi_tidak_valid, Toast.LENGTH_LONG).show();
@@ -194,6 +228,7 @@ public class PlayerActivity extends AppCompatActivity {
         }
 
         String title = getIntent().getStringExtra(EXTRA_TITLE);
+        if (title == null) title = intentTitle;
         titleView.setText(title == null ? "" : title);
         titleView.setSelected(true); // supaya judul panjang berjalan (marquee)
 
@@ -234,6 +269,8 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         handler.removeCallbacks(hideIndicator);
+        handler.removeCallbacks(endFastSeek);
+        fastSeekOverlay.hideNow();
         releasePlayer();
     }
 
@@ -309,14 +346,48 @@ public class PlayerActivity extends AppCompatActivity {
         final int slop = ViewConfiguration.get(this).getScaledTouchSlop();
         final float edge = 32 * getResources().getDisplayMetrics().density; // zona gesture sistem
 
+        tapDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override public boolean onDown(MotionEvent e) { return true; }
+
+            @Override public boolean onSingleTapConfirmed(MotionEvent e) {
+                if (fastSeekActive) return true;
+                if (playerView.isControllerFullyVisible()) playerView.hideController();
+                else playerView.showController();
+                return true;
+            }
+
+            @Override public boolean onDoubleTap(MotionEvent e) {
+                int w = playerView.getWidth();
+                if (e.getX() < w / 3f) fastSeek(false);
+                else if (e.getX() > w * 2f / 3f) fastSeek(true);
+                else if (player != null) {
+                    if (player.isPlaying()) player.pause(); else player.play();
+                }
+                return true;
+            }
+        });
+
         playerView.setOnTouchListener((v, e) -> {
-            switch (e.getActionMasked()) {
+            int act = e.getActionMasked();
+            // ketukan lanjutan saat efek maju/mundur masih aktif: tiap ketukan menambah 30 dtk
+            if (swallowTouch) {
+                if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_CANCEL) swallowTouch = false;
+                return true;
+            }
+            if (fastSeekActive && act == MotionEvent.ACTION_DOWN) {
+                swallowTouch = true;
+                fastSeek(e.getX() >= v.getWidth() / 2f);
+                return true;
+            }
+            tapDetector.onTouchEvent(e);
+
+            switch (act) {
                 case MotionEvent.ACTION_DOWN:
                     gStartX = e.getX();
                     gStartY = e.getY();
                     gActive = false;
                     gMode = (gStartX < edge || gStartX > v.getWidth() - edge) ? -1 : 0;
-                    return false; // biarkan PlayerView mencatat sentuhan (untuk ketukan)
+                    return true; // ketukan diurus tapDetector (PlayerView tidak lagi menerima sentuhan)
 
                 case MotionEvent.ACTION_MOVE: {
                     if (gMode == -1 || e.getPointerCount() > 1) return gActive;
@@ -632,6 +703,26 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
+    /** Maju/mundur beruntun: tiap ketukan menambah FAST_SEEK_STEP_MS, ganti arah = hitung ulang. */
+    private void fastSeek(boolean forward) {
+        if (player == null || !player.isCurrentMediaItemSeekable()) return;
+        if (!fastSeekActive || forward != fastSeekForward) fastSeekAccumMs = 0;
+        fastSeekForward = forward;
+        fastSeekAccumMs += FAST_SEEK_STEP_MS;
+
+        long dur = player.getDuration();
+        long target = player.getCurrentPosition() + (forward ? FAST_SEEK_STEP_MS : -FAST_SEEK_STEP_MS);
+        target = Math.max(0L, target);
+        if (dur != C.TIME_UNSET) target = Math.min(target, dur);
+        player.seekTo(target);
+
+        fastSeekActive = true;
+        playerView.hideController();
+        fastSeekOverlay.show(forward, (int) (fastSeekAccumMs / 1000));
+        handler.removeCallbacks(endFastSeek);
+        handler.postDelayed(endFastSeek, FastSeekOverlay.DURATION_MS);
+    }
+
     // ------------------------------------------------ pill info & dialog trek
 
     private final Runnable hidePill = () -> pill.animate().alpha(0f).setDuration(200)
@@ -815,6 +906,30 @@ public class PlayerActivity extends AppCompatActivity {
         return new DefaultDataSource.Factory(this, http);
     }
 
+    /** Uri video dari intent aplikasi lain (VIEW atau Bagikan), atau null kalau dari MainActivity. */
+    private static Uri externalVideoUri(Intent i) {
+        if (Intent.ACTION_VIEW.equals(i.getAction()) && i.getData() != null) return i.getData();
+        if (Intent.ACTION_SEND.equals(i.getAction())) {
+            return IntentCompat.getParcelableExtra(i, Intent.EXTRA_STREAM, Uri.class);
+        }
+        return null;
+    }
+
+    private String displayNameFor(Uri uri) {
+        if ("content".equals(uri.getScheme())) {
+            try (Cursor c = getContentResolver().query(uri,
+                    new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    String n = c.getString(0);
+                    if (n != null && !n.isEmpty()) return n;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        String last = uri.getLastPathSegment();
+        return last == null ? uri.toString() : last;
+    }
+
     private MediaSource buildSource(JSONObject o) throws Exception {
         String kind = o.optString("kind", "single");
         JSONObject headers = o.optJSONObject("headers");
@@ -847,9 +962,12 @@ public class PlayerActivity extends AppCompatActivity {
                 return new MergingMediaSource(v, a);
             }
 
-            default: // "single"
-                return new DefaultMediaSourceFactory(dataFactory(headers))
-                        .createMediaSource(MediaItem.fromUri(o.getString("url")));
+            default: { // "single"
+                MediaItem.Builder b = new MediaItem.Builder().setUri(o.getString("url"));
+                String mime = o.optString("mime", "");
+                if (!mime.isEmpty()) b.setMimeType(mime);
+                return new DefaultMediaSourceFactory(dataFactory(headers)).createMediaSource(b.build());
+            }
         }
     }
 }
