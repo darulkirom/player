@@ -2,12 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_dark"
     android:orientation="vertical"
-    android:paddingStart="16dp"
+    android:paddingStart="8dp"
     android:paddingTop="8dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="12dp">
+    android:paddingEnd="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -55,29 +53,4 @@
         </ScrollView>
     </FrameLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="end"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/track_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/batal"
-            android:textAllCaps="true"
-            android:textColor="#CCFFFFFF"
-            android:textSize="12sp" />
-        <TextView
-            android:id="@+id/track_ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/oke"
-            android:textAllCaps="true"
-            android:textColor="#CCFFFFFF"
-            android:textSize="12sp" />
-    </LinearLayout>
 </LinearLayout>

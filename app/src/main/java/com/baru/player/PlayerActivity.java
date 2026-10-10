@@ -779,8 +779,8 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /**
-     * Dialog pilih trek memakai TrackSelectionView bawaan Media3, satu dialog dengan tab
-     * Video dan Audio (pola sama dengan app demo ExoPlayer). Pilihan diterapkan saat OKE.
+     * Dialog pilih trek: AlertDialog standar + TrackSelectionView bawaan Media3, satu dialog dengan
+     * tab Video dan Audio (pola sama dengan app demo ExoPlayer). Pilihan diterapkan saat OKE.
      */
     @OptIn(markerClass = UnstableApi.class)
     private void showTrackDialog() {
@@ -789,10 +789,7 @@ public class PlayerActivity extends AppCompatActivity {
         final TrackSelectionParameters params = player.getTrackSelectionParameters();
         final Tracks tracks = player.getCurrentTracks();
 
-        final Dialog dlg = new Dialog(this);
-        dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
         View root = getLayoutInflater().inflate(R.layout.dialog_tracks, null);
-        dlg.setContentView(root);
 
         final TrackSelectionView[] views = {
                 root.findViewById(R.id.track_view_video), root.findViewById(R.id.track_view_audio)};
@@ -830,22 +827,19 @@ public class PlayerActivity extends AppCompatActivity {
         tabs[1].setOnClickListener(v -> { cur[0] = 1; showTab[0].run(); });
         showTab[0].run();
 
-        root.findViewById(R.id.track_cancel).setOnClickListener(v -> dlg.dismiss());
-        root.findViewById(R.id.track_ok).setOnClickListener(v -> {
-            TrackSelectionParameters.Builder b = player.getTrackSelectionParameters().buildUpon();
-            for (int k = 0; k < 2; k++) {
-                b.setTrackTypeDisabled(types[k], views[k].getIsDisabled());
-                b.clearOverridesOfType(types[k]);
-                for (TrackSelectionOverride o : views[k].getOverrides().values()) b.addOverride(o);
-            }
-            player.setTrackSelectionParameters(b.build());
-            dlg.dismiss();
-        });
-
-        dlg.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dlg.show();
-        int w = Math.min(dp(420), (int) (getResources().getDisplayMetrics().widthPixels * 0.9f));
-        dlg.getWindow().setLayout(w, ViewGroup.LayoutParams.WRAP_CONTENT);
+        new MaterialAlertDialogBuilder(this)
+                .setView(root)
+                .setNegativeButton(R.string.batal, null)
+                .setPositiveButton(R.string.oke, (d, w) -> {
+                    TrackSelectionParameters.Builder b = player.getTrackSelectionParameters().buildUpon();
+                    for (int k = 0; k < 2; k++) {
+                        b.setTrackTypeDisabled(types[k], views[k].getIsDisabled());
+                        b.clearOverridesOfType(types[k]);
+                        for (TrackSelectionOverride o : views[k].getOverrides().values()) b.addOverride(o);
+                    }
+                    player.setTrackSelectionParameters(b.build());
+                })
+                .show();
     }
 
     // ---------------------------------------------------------------- player

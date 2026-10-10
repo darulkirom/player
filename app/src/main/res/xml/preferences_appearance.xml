@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="true"
+        app:title="@string/appearance_header">
+
+        <ListPreference
+            app:entries="@array/theme_modes"
+            app:entryValues="@array/theme_indices_modes"
+            app:icon="@drawable/ic_brightness"
+            app:key="theme_mode"
+            app:negativeButtonText="@string/batal"
+            app:title="@string/theme_mode"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:entries="@array/theme_styles"
+            app:entryValues="@array/theme_indices_styles"
+            app:icon="@drawable/ic_format_paint"
+            app:key="theme_style"
+            app:negativeButtonText="@string/batal"
+            app:title="@string/theme_style"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</PreferenceScreen>

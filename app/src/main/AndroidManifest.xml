@@ -7,6 +7,10 @@
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- Tombol unduh: simpan ke folder Download (hanya Android 9 ke bawah yang butuh izin) -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <!-- Cookie disimpan di folder internal privat aplikasi, jadi tidak perlu
          izin penyimpanan sama sekali. -->
 

@@ -14,7 +14,7 @@
     <string name="cookie_tersimpan">Cookie disimpan.</string>
     <string name="gagal_putar">Gagal memutar: %1$s</string>
     <string name="opsi_tidak_valid">Pilihan tidak valid.</string>
-    <string name="petunjuk">Ketuk: pilih Leone atau pemutar bawaan · Tahan: salin link</string>
+    <string name="petunjuk">Ikon di kanan: salin · unduh · Leone · pemutar bawaan</string>
     <string name="buka_dengan">Buka dengan</string>
     <string name="tidak_ada_player">Tidak ada aplikasi pemutar yang bisa membuka link ini.</string>
     <string name="link_disalin">Link disalin.</string>
@@ -119,4 +119,42 @@
     <string name="video_more">More</string>
     <string name="video_play">Play</string>
     <string name="video_share">Share</string>
+    <string name="appearance_header">Customize the app\'s theme</string>
+    <string name="theme_mode">Theme Mode</string>
+    <string name="theme_style">Theme Style</string>
+    <string-array name="theme_modes">
+        <item>Follow System</item>
+        <item>Always Light</item>
+        <item>Always Dark</item>
+    </string-array>
+    <string-array name="theme_styles">
+        <item>Ignite Blaze</item>
+        <item>Frosty Aura</item>
+        <item>Earthen Elegance</item>
+        <item>Enchanted Grove</item>
+        <item>Red Rose</item>
+        <item>Dynamic Theme</item>
+    </string-array>
+    <string-array name="theme_indices_modes">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="theme_indices_styles">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+    <string name="cd_salin">Salin link</string>
+    <string name="cd_unduh">Unduh</string>
+    <string name="cd_stream">Buka di Leone (network stream)</string>
+    <string name="cd_bawaan">Putar di pemutar bawaan</string>
+    <string name="video_audio_terpisah">Video + audio terpisah (hanya pemutar bawaan)</string>
+    <string name="tidak_bisa_unduh">Hanya link langsung yang bisa diunduh. HLS/DASH dan video+audio terpisah belum didukung.</string>
+    <string name="unduh_mulai">Mengunduh ke folder Download…</string>
+    <string name="unduh_gagal">Gagal memulai unduhan: %1$s</string>
+    <string name="izin_simpan">Izinkan akses penyimpanan, lalu ketuk unduh lagi.</string>
 </resources>

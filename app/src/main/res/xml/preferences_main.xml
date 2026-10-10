@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:fragment="com.baru.player.AppearanceFragment"
+        app:icon="@drawable/ic_palette"
+        app:key="appearance"
+        app:summary="@string/set_appearance_desc"
+        app:title="@string/set_appearance" />
+
+    <Preference
+        app:icon="@drawable/ic_playlist_play"
+        app:key="playlist"
+        app:summary="@string/set_playlist_desc"
+        app:title="@string/set_playlist" />
+
+    <Preference
+        app:icon="@drawable/ic_settings_row"
+        app:key="general"
+        app:summary="@string/set_general_desc"
+        app:title="@string/set_general" />
+
+    <Preference
+        app:icon="@drawable/ic_video_settings_row"
+        app:key="advance"
+        app:summary="@string/set_advance_desc"
+        app:title="@string/set_advance" />
+
+    <Preference
+        app:icon="@drawable/ic_shortcut"
+        app:key="shortcuts"
+        app:summary="@string/set_shortcuts_desc"
+        app:title="@string/set_shortcuts" />
+</PreferenceScreen>

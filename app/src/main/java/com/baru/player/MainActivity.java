@@ -17,7 +17,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeStore.applyMode(this);
         super.onCreate(savedInstanceState);
+        ThemeStore.applyStyle(this);
         setContentView(R.layout.activity_main);
 
         setSupportActionBar(findViewById(R.id.main_toolbar));

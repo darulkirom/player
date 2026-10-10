@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 public class HomeViewModel extends ViewModel {
     final ExecutorService io = Executors.newSingleThreadExecutor();
     final List<JSONObject> options = new ArrayList<>();
-    final List<String> labels = new ArrayList<>();
     String videoTitle = "";
     String status = "";
     boolean busy;

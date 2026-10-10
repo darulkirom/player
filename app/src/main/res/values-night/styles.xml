@@ -1,69 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
 <resources>
-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
-    </style>
-    <!-- Tema untuk PreferenceFragmentCompat (Settings & Appearance) -->
-    <style name="AppPreferenceThemeOverlay" parent="PreferenceThemeOverlay.v14.Material" />
-
-    <!-- Ikon di baris hasil (salin / unduh / Leone / pemutar bawaan) -->
-    <style name="OptionIconButton" parent="">
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
-        <item name="android:padding">8dp</item>
-        <item name="android:scaleType">fitCenter</item>
-        <item name="android:tint">?attr/colorOnSurfaceVariant</item>
-        <item name="android:focusable">false</item>
-    </style>
-    <!-- Induk untuk Theme.App.* di bawah (sebelumnya belum didefinisikan) -->
-
-     <style name="Base.LightTheme.App" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.DarkTheme.NetworkStream" parent="@style/Theme.Material3.Dark.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">?attr/colorSurfaceContainer</item>
         <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
     </style>
-    <style name="PlayerTheme" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="android:windowBackground">@android:color/black</item>
-    </style>
-
-    <!-- Tombol bawah pemutar (meniru layout referensi) -->
-    <style name="ExoStyledControls.Button.Bottom.Resize" parent="">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:minWidth">48dp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">8dp</item>
-        <item name="android:clickable">true</item>
-        <item name="android:focusable">true</item>
-        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="android:textSize">12sp</item>
-        <item name="android:textStyle">bold</item>
-    </style>
-    <style name="ExoStyledControls.Button.Bottom.Volume" parent="ExoStyledControls.Button.Bottom">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:padding">12dp</item>
-        <item name="android:src">@drawable/ic_volume_up</item>
-        <item name="android:contentDescription">@string/cd_bisu</item>
-    </style>
-    <style name="ExoStyledControls.Button.Bottom.Video" parent="ExoStyledControls.Button.Bottom">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:padding">12dp</item>
-        <item name="android:src">@drawable/ic_video_settings</item>
-        <item name="android:contentDescription">@string/kualitas</item>
-    </style>
-    <style name="ExoStyledControls.Button.Bottom.PIP" parent="ExoStyledControls.Button.Bottom">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:padding">12dp</item>
-        <item name="android:src">@drawable/ic_pip</item>
-        <item name="android:contentDescription">@string/cd_pip</item>
-    </style>
-        <style name="Theme.App.DynamicTheme" parent="@style/ThemeOverlay.Material3.DynamicColors.Light" />
-    <style name="Theme.App.EarthenElegance" parent="@style/Base.LightTheme.App">
+    <style name="Theme.NetworkStream.DynamicTheme" parent="@style/ThemeOverlay.Material3.DynamicColors.Dark" />
+    <style name="Theme.NetworkStream.EarthenElegance" parent="@style/Base.DarkTheme.NetworkStream">
         <item name="android:colorBackground">@color/earthen_elegance_md_theme_background</item>
         <item name="colorError">@color/earthen_elegance_md_theme_error</item>
         <item name="colorErrorContainer">@color/earthen_elegance_md_theme_errorContainer</item>
@@ -111,7 +54,7 @@
         <item name="colorTertiaryFixed">@color/earthen_elegance_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/earthen_elegance_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.App.EnchantedGrove" parent="@style/Base.LightTheme.App">
+    <style name="Theme.NetworkStream.EnchantedGrove" parent="@style/Base.DarkTheme.NetworkStream">
         <item name="android:colorBackground">@color/enchanted_grove_md_theme_background</item>
         <item name="colorError">@color/enchanted_grove_md_theme_error</item>
         <item name="colorErrorContainer">@color/enchanted_grove_md_theme_errorContainer</item>
@@ -159,7 +102,7 @@
         <item name="colorTertiaryFixed">@color/enchanted_grove_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/enchanted_grove_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.App.FrostyAura" parent="@style/Base.LightTheme.App">
+    <style name="Theme.NetworkStream.FrostyAura" parent="@style/Base.DarkTheme.NetworkStream">
         <item name="android:colorBackground">@color/frosty_aura_md_theme_background</item>
         <item name="colorError">@color/frosty_aura_md_theme_error</item>
         <item name="colorErrorContainer">@color/frosty_aura_md_theme_errorContainer</item>
@@ -207,7 +150,7 @@
         <item name="colorTertiaryFixed">@color/frosty_aura_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/frosty_aura_md_theme_tertiaryFixedDim</item>
     </style>
-    <style name="Theme.App.IgniteBlaze" parent="@style/Base.LightTheme.App">
+    <style name="Theme.NetworkStream.IgniteBlaze" parent="@style/Base.DarkTheme.NetworkStream">
         <item name="android:colorBackground">@color/ignite_blaze_md_theme_background</item>
         <item name="colorError">@color/ignite_blaze_md_theme_error</item>
         <item name="colorErrorContainer">@color/ignite_blaze_md_theme_errorContainer</item>
@@ -255,7 +198,7 @@
         <item name="colorTertiaryFixed">@color/ignite_blaze_md_theme_tertiaryFixed</item>
         <item name="colorTertiaryFixedDim">@color/ignite_blaze_md_theme_tertiaryFixedDim</item>
     </style>
-       <style name="Theme.App.RedRose" parent="@style/Base.LightTheme.App">
+    <style name="Theme.NetworkStream.RedRose" parent="@style/Base.DarkTheme.NetworkStream">
         <item name="android:colorBackground">@color/red_rose_md_theme_background</item>
         <item name="colorError">@color/red_rose_md_theme_error</item>
         <item name="colorErrorContainer">@color/red_rose_md_theme_errorContainer</item>

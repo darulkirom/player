@@ -23,4 +23,8 @@
         android:id="@+id/settingsFragment"
         android:name="com.baru.player.SettingsFragment"
         android:label="@string/nav_settings" />
+    <fragment
+        android:id="@+id/appearanceFragment"
+        android:name="com.baru.player.AppearanceFragment"
+        android:label="@string/set_appearance" />
 </navigation>

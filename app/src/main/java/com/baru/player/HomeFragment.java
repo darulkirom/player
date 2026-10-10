@@ -6,9 +6,14 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import com.google.android.material.color.MaterialColors;
 import android.net.Uri;
 import android.os.Build;
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +28,7 @@ import android.text.InputType;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -74,7 +80,7 @@ public class HomeFragment extends Fragment {
     private TextView tvStatus;
     private TextView tvCookieLoc;
     private Button btnStorage;
-    private ArrayAdapter<String> listAdapter;
+    private OptionAdapter listAdapter;
 
     @Nullable
     @Override
@@ -105,9 +111,10 @@ public class HomeFragment extends Fragment {
         spPlatform.setAdapter(pa);
         spPlatform.setSelection(4); // "Lainnya (otomatis)"
 
-        listAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, vm.labels);
+        listAdapter = new OptionAdapter();
         lv.setAdapter(listAdapter);
-        lv.setOnItemClickListener((parent, view, pos, id) -> play(pos));
+        // Ketuk baris = pemutar bawaan; tahan = salin. Ikon di kanan punya aksi sendiri.
+        lv.setOnItemClickListener((parent, view, pos, id) -> openBuiltIn(pos));
         lv.setOnItemLongClickListener((parent, view, pos, id) -> {
             copyLink(pos);
             return true;
@@ -253,7 +260,6 @@ public class HomeFragment extends Fragment {
         final String platform = String.valueOf(spPlatform.getSelectedItemPosition() + 1);
 
         vm.options.clear();
-        vm.labels.clear();
         listAdapter.notifyDataSetChanged();
         setBusy(true, getString(R.string.mengambil_info));
 
@@ -282,7 +288,6 @@ public class HomeFragment extends Fragment {
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject o = arr.getJSONObject(i);
                     vm.options.add(o);
-                    vm.labels.add(o.optString("label", "?"));
                 }
                 if (!isAdded()) return; // pengguna sudah pindah tab; hasil tetap tersimpan di vm
                 listAdapter.notifyDataSetChanged();
@@ -438,29 +443,91 @@ public class HomeFragment extends Fragment {
 
     private static final String LEONE_PACKAGE = "com.genuine.leone";
 
-    private void play(final int pos) {
+    private JSONObject optionAt(int pos) {
         if (pos < 0 || pos >= vm.options.size()) {
             Toast.makeText(requireContext(), R.string.opsi_tidak_valid, Toast.LENGTH_SHORT).show();
-            return;
+            return null;
         }
-        final JSONObject o = vm.options.get(pos);
+        return vm.options.get(pos);
+    }
 
-        // Video & audio terpisah tidak bisa jadi satu link: hanya bisa di pemutar bawaan.
-        if ("merge".equals(o.optString("kind"))) {
-            openBuiltIn(pos);
-            return;
+    private static boolean isMerge(JSONObject o) {
+        return "merge".equals(o.optString("kind"));
+    }
+
+    // ------------------------------------------------------- daftar hasil
+
+    /** Satu baris per hasil: label + link di kiri, ikon salin / unduh / Leone / bawaan di kanan. */
+    private final class OptionAdapter extends BaseAdapter {
+        @Override public int getCount() { return vm.options.size(); }
+        @Override public Object getItem(int i) { return vm.options.get(i); }
+        @Override public long getItemId(int i) { return i; }
+
+        @Override
+        public View getView(int pos, View convert, ViewGroup parent) {
+            View row = convert != null ? convert
+                    : LayoutInflater.from(parent.getContext()).inflate(R.layout.item_option, parent, false);
+            JSONObject o = vm.options.get(pos);
+            boolean merge = isMerge(o);
+
+            ((TextView) row.findViewById(R.id.opt_label)).setText(o.optString("label", "?"));
+            ((TextView) row.findViewById(R.id.opt_link)).setText(merge
+                    ? getString(R.string.video_audio_terpisah) : displayLink(o));
+
+            bind(row.findViewById(R.id.btn_copy), !merge, () -> copyLink(pos));
+            bind(row.findViewById(R.id.btn_download), canDownload(o), () -> download(pos));
+            ImageView stream = row.findViewById(R.id.btn_stream);
+            Drawable appIcon = leoneIcon();
+            if (appIcon != null) {
+                stream.setImageDrawable(appIcon);
+                stream.setImageTintList(null); // ikon asli aplikasi, jangan diwarnai
+            } else {
+                stream.setImageResource(android.R.drawable.ic_media_play); // Leone belum terpasang
+                stream.setImageTintList(ColorStateList.valueOf(MaterialColors.getColor(
+                        stream, com.google.android.material.R.attr.colorOnSurfaceVariant)));
+            }
+            bind(stream, !merge, () -> openLeone(o));
+            bind(row.findViewById(R.id.btn_builtin), true, () -> openBuiltIn(pos));
+            return row;
         }
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.buka_di)
-                .setItems(new String[]{
-                        getString(R.string.buka_leone),
-                        getString(R.string.putar_bawaan)
-                }, (d, which) -> {
-                    if (which == 0) openLeone(o);
-                    else openBuiltIn(pos);
-                })
-                .show();
+        /** enabled=false: ikon diredupkan, tapi tetap bisa diketuk untuk menjelaskan alasannya. */
+        private void bind(View b, boolean enabled, Runnable action) {
+            b.setAlpha(enabled ? 1f : 0.38f);
+            b.setOnClickListener(v -> {
+                if (enabled) {
+                    action.run();
+                } else if (b.getId() == R.id.btn_download) {
+                    Toast.makeText(requireContext(), R.string.tidak_bisa_unduh, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(requireContext(), R.string.tidak_bisa_salin, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    }
+
+    private Drawable leoneIconCache;
+
+    /** Ikon aplikasi Leone diambil dari paketnya; null kalau tidak terpasang. */
+    private Drawable leoneIcon() {
+        if (leoneIconCache == null) {
+            try {
+                leoneIconCache = requireContext().getPackageManager()
+                        .getApplicationIcon(LEONE_PACKAGE);
+            } catch (PackageManager.NameNotFoundException e) {
+                return null;
+            }
+        }
+        return leoneIconCache.getConstantState() != null
+                ? leoneIconCache.getConstantState().newDrawable().mutate() : leoneIconCache;
+    }
+
+    /** Teks link untuk ditampilkan; tidak menyiapkan file/server (itu baru saat salin/buka). */
+    private static String displayLink(JSONObject o) {
+        if ("hls_split".equals(o.optString("kind"))) {
+            return "http://127.0.0.1:" + LocalServer.PORT + "/master.m3u8";
+        }
+        return o.optString("url", "");
     }
 
     private void openBuiltIn(int pos) {
@@ -540,6 +607,72 @@ public class HomeFragment extends Fragment {
             }
         }
         return l.toArray(new String[0]);
+    }
+
+    // -------------------------------------------------------------- unduh
+
+    /** Hanya file langsung (mp4 dsb). HLS/DASH berisi segmen, merge butuh ffmpeg. */
+    private static boolean canDownload(JSONObject o) {
+        return "single".equals(o.optString("kind")) && !o.optString("url", "").isEmpty();
+    }
+
+    private void download(int pos) {
+        JSONObject o = optionAt(pos);
+        if (o == null) return;
+        if (!canDownload(o)) {
+            Toast.makeText(requireContext(), R.string.tidak_bisa_unduh, Toast.LENGTH_LONG).show();
+            return;
+        }
+        // Android 7-9 butuh izin tulis untuk folder Download publik; 10+ tidak.
+        if (Build.VERSION.SDK_INT <= 28
+                && requireContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            Toast.makeText(requireContext(), R.string.izin_simpan, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String url = o.optString("url");
+        try {
+            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+            JSONObject h = o.optJSONObject("headers");
+            if (h != null) {
+                Iterator<String> it = h.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    req.addRequestHeader(k, h.optString(k));
+                }
+            }
+            String name = fileName(o, url);
+            req.setTitle(name);
+            req.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+            DownloadManager dm = (DownloadManager) requireContext()
+                    .getSystemService(Context.DOWNLOAD_SERVICE);
+            dm.enqueue(req);
+            Toast.makeText(requireContext(), R.string.unduh_mulai, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(requireContext(), getString(R.string.unduh_gagal, e.getMessage()),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private String fileName(JSONObject o, String url) {
+        String base = vm.videoTitle == null || vm.videoTitle.trim().isEmpty()
+                ? "video" : vm.videoTitle.trim();
+        String label = o.optString("label", "").replaceAll("\\s*\\[.*?\\]", "").trim();
+        if (!label.isEmpty() && !label.equals("Link langsung")) base += " " + label;
+        base = base.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "_");
+        if (base.length() > 100) base = base.substring(0, 100);
+        String path = Uri.parse(url).getLastPathSegment();
+        String ext = "mp4";
+        if (path != null) {
+            Matcher m = java.util.regex.Pattern
+                    .compile("\\.(mp4|m4v|mkv|webm|mov|flv|3gp|ts)$", java.util.regex.Pattern.CASE_INSENSITIVE)
+                    .matcher(path);
+            if (m.find()) ext = m.group(1).toLowerCase(java.util.Locale.ROOT);
+        }
+        return base + "." + ext;
     }
 
     private void copyLink(int pos) {
