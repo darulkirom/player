@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="true"
+        app:title="@string/general_header">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:icon="@drawable/ic_pip_alt"
+            app:key="pip_auto"
+            app:summaryOff="@string/pip_off"
+            app:summaryOn="@string/pip_on"
+            app:title="@string/pip_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:icon="@drawable/ic_volume_off"
+            app:key="skip_silence"
+            app:summaryOff="@string/skip_off"
+            app:summaryOn="@string/skip_on"
+            app:title="@string/skip_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:icon="@drawable/ic_crop_landscape"
+            app:key="force_landscape"
+            app:summary="@string/landscape_desc"
+            app:title="@string/landscape_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:icon="@drawable/ic_volume_up"
+            app:key="gesture_volume"
+            app:summary="@string/gvol_desc"
+            app:title="@string/gvol_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:icon="@drawable/ic_brightness"
+            app:key="gesture_brightness"
+            app:summary="@string/gbri_desc"
+            app:title="@string/gbri_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:icon="@drawable/ic_play_circle"
+            app:key="resume_playing"
+            app:summary="@string/resume_desc"
+            app:title="@string/resume_title"
+            app:widgetLayout="@layout/preference_material_switch" />
+
+        <ListPreference
+            app:defaultValue="30"
+            app:entries="@array/seek_entries"
+            app:entryValues="@array/seek_values"
+            app:icon="@drawable/ic_fast_forward"
+            app:key="seek_duration"
+            app:negativeButtonText="@string/batal"
+            app:title="@string/seek_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+</PreferenceScreen>

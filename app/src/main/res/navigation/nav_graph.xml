@@ -27,4 +27,8 @@
         android:id="@+id/appearanceFragment"
         android:name="com.baru.player.AppearanceFragment"
         android:label="@string/set_appearance" />
+    <fragment
+        android:id="@+id/generalFragment"
+        android:name="com.baru.player.GeneralFragment"
+        android:label="@string/set_general" />
 </navigation>

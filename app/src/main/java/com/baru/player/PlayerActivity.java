@@ -35,6 +35,7 @@ import android.database.Cursor;
 import android.provider.OpenableColumns;
 import androidx.core.content.IntentCompat;
 import android.view.GestureDetector;
+import androidx.media3.common.AudioAttributes;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -137,7 +138,8 @@ public class PlayerActivity extends AppCompatActivity {
     private AudioManager audio;
 
     // ketuk dua kali: maju/mundur beruntun (gaya YouTube)
-    private static final long FAST_SEEK_STEP_MS = 30_000L; // tiap ketukan = 30 detik
+    private long fastSeekStepMs = 30_000L; // tiap ketukan; diatur di Settings > General
+    private PlayerSettings settings;
     private FastSeekOverlay fastSeekOverlay;
     private GestureDetector tapDetector;
     private boolean fastSeekActive;
@@ -186,6 +188,9 @@ public class PlayerActivity extends AppCompatActivity {
         prefs = getSharedPreferences("player", MODE_PRIVATE);
         resizeIdx = clamp(prefs.getInt("resize", 0), RESIZE_MODES.length);
         orientIdx = clamp(prefs.getInt("orient", 0), ORIENTATIONS.length);
+        settings = new PlayerSettings(this);
+        fastSeekStepMs = settings.seekStepMs();
+        if (settings.forceLandscape()) orientIdx = 1; // langsung lanskap (belum disimpan sampai tombol rotasi dipakai)
 
         playerView = findViewById(R.id.player_view);
         lockLayer = findViewById(R.id.lock_layer);
@@ -277,6 +282,7 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         started = true;
+        fastSeekStepMs = settings.seekStepMs();
         if (player == null && !options.isEmpty()) initPlayer();
     }
 
@@ -422,6 +428,11 @@ public class PlayerActivity extends AppCompatActivity {
                             gMode = 3;
                         } else if (Math.abs(dy) > Math.abs(dx) * 1.25f) {
                             gMode = gStartX < v.getWidth() / 2f ? 1 : 2;
+                            if ((gMode == 1 && !settings.brightnessGesture())
+                                    || (gMode == 2 && !settings.volumeGesture())) {
+                                gMode = -1; // gesture dimatikan di Settings > General
+                                return false;
+                            }
                         } else {
                             return false;
                         }
@@ -621,6 +632,12 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (settings != null && settings.autoPip() && player != null && player.isPlaying()) enterPip();
+    }
+
+    @Override
     public void onPictureInPictureModeChanged(boolean isInPip, Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPip, newConfig);
         playerView.setUseController(!isInPip && !locked);
@@ -721,15 +738,15 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
 
-    /** Maju/mundur beruntun: tiap ketukan menambah FAST_SEEK_STEP_MS, ganti arah = hitung ulang. */
+    /** Maju/mundur beruntun: tiap ketukan menambah fastSeekStepMs, ganti arah = hitung ulang. */
     private void fastSeek(boolean forward) {
         if (player == null || !player.isCurrentMediaItemSeekable()) return;
         if (!fastSeekActive || forward != fastSeekForward) fastSeekAccumMs = 0;
         fastSeekForward = forward;
-        fastSeekAccumMs += FAST_SEEK_STEP_MS;
+        fastSeekAccumMs += fastSeekStepMs;
 
         long dur = player.getDuration();
-        long target = player.getCurrentPosition() + (forward ? FAST_SEEK_STEP_MS : -FAST_SEEK_STEP_MS);
+        long target = player.getCurrentPosition() + (forward ? fastSeekStepMs : -fastSeekStepMs);
         target = Math.max(0L, target);
         if (dur != C.TIME_UNSET) target = Math.min(target, dur);
         player.seekTo(target);
@@ -848,12 +865,33 @@ public class PlayerActivity extends AppCompatActivity {
         try {
             MediaSource source = buildSource(options.get(current));
             player = new ExoPlayer.Builder(this)
-                    .setSeekBackIncrementMs(10000)
-                    .setSeekForwardIncrementMs(10000)
+                    .setSeekBackIncrementMs(fastSeekStepMs)
+                    .setSeekForwardIncrementMs(fastSeekStepMs)
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(C.USAGE_MEDIA)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                            .build(), true) // jeda otomatis saat ada telepon/aplikasi lain
+                    .setHandleAudioBecomingNoisy(true)
                     .build();
+            player.setSkipSilenceEnabled(settings.skipSilence());
             player.setVolume(muted ? 0f : 1f);
             playerView.setPlayer(player);
             player.addListener(new Player.Listener() {
+                private boolean pausedByFocus;
+
+                @Override
+                public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+                    if (reason != Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
+                        pausedByFocus = false;
+                    } else if (!playWhenReady) {
+                        pausedByFocus = true;
+                    } else if (pausedByFocus) {
+                        pausedByFocus = false;
+                        // Settings > General > "Resume playing" mati: tetap jeda setelah gangguan selesai
+                        if (!settings.resumePlaying() && player != null) player.pause();
+                    }
+                }
+
                 @Override
                 public void onVideoSizeChanged(VideoSize size) {
                     if (size.height > 0) {

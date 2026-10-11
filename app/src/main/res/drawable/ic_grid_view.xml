@@ -4,7 +4,8 @@
     android:viewportWidth="24"
     android:viewportHeight="24"
     android:tint="?attr/colorControlNormal">
+    <!-- view_module: 3 kolom x 2 baris, sama seperti ikon di referensi -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M3,3v8h8L11,3L3,3zM9,9L5,9L5,5h4v4zM3,13v8h8v-8L3,13zM9,19L5,19v-4h4v4zM13,3v8h8L21,3h-8zM19,9h-4L15,5h4v4zM13,13v8h8v-8h-8zM19,19h-4v-4h4v4z" />
+        android:pathData="M4,11h5V5H4v6zM4,18h5v-6H4v6zM10,18h5v-6h-5v6zM16,18h5v-6h-5v6zM10,11h5V5h-5v6zM16,5v6h5V5h-5z" />
 </vector>

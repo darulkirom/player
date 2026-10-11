@@ -17,12 +17,17 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences_main, rootKey);
+        PrefIcons.tint(requireContext(), getPreferenceScreen());
     }
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
         if ("appearance".equals(preference.getKey())) {
             NavHostFragment.findNavController(this).navigate(R.id.appearanceFragment);
+            return true;
+        }
+        if ("general".equals(preference.getKey())) {
+            NavHostFragment.findNavController(this).navigate(R.id.generalFragment);
             return true;
         }
         Toast.makeText(requireContext(), R.string.segera_hadir, Toast.LENGTH_SHORT).show();

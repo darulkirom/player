@@ -14,7 +14,7 @@
         app:title="@string/set_playlist" />
 
     <Preference
-        app:icon="@drawable/ic_settings_row"
+        app:icon="@drawable/ic_settings_suggest"
         app:key="general"
         app:summary="@string/set_general_desc"
         app:title="@string/set_general" />

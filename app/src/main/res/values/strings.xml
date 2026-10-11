@@ -157,4 +157,32 @@
     <string name="unduh_mulai">Mengunduh ke folder Download…</string>
     <string name="unduh_gagal">Gagal memulai unduhan: %1$s</string>
     <string name="izin_simpan">Izinkan akses penyimpanan, lalu ketuk unduh lagi.</string>
+    <string name="general_header">Playback and gestures</string>
+    <string name="pip_title">Auto picture-in-picture</string>
+    <string name="pip_on">Switch to PiP when leaving the app</string>
+    <string name="pip_off">Do not automatically switch to PiP</string>
+    <string name="skip_title">Skip silence in Audio</string>
+    <string name="skip_on">Skip parts with silence on the audio stream</string>
+    <string name="skip_off">Play content as is</string>
+    <string name="landscape_title">Videos are always played in landscape mode</string>
+    <string name="landscape_desc">Directly launch the player in landscape mode</string>
+    <string name="gvol_title">Volume gesture control</string>
+    <string name="gvol_desc">Use gestures to control player volume</string>
+    <string name="gbri_title">Brightness gesture control</string>
+    <string name="gbri_desc">Use gestures to control player brightness</string>
+    <string name="resume_title">Resume playing</string>
+    <string name="resume_desc">Continue playing after interruptions (e.g. phonecalls)</string>
+    <string name="seek_title">Fast-forward/rewind seek duration</string>
+    <string-array name="seek_entries">
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>20 seconds</item>
+        <item>30 seconds</item>
+    </string-array>
+    <string-array name="seek_values">
+        <item>5</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+    </string-array>
 </resources>

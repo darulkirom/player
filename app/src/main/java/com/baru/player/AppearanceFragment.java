@@ -38,5 +38,6 @@ public class AppearanceFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         getPreferenceManager().setPreferenceDataStore(store);
         setPreferencesFromResource(R.xml.preferences_appearance, rootKey);
+        PrefIcons.tint(requireContext(), getPreferenceScreen());
     }
 }

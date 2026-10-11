@@ -56,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setOnItemReselectedListener(item -> nav.popBackStack(item.getItemId(), false));
 
         nav.addOnDestinationChangedListener((controller, dest, args) -> {
-            int tab = dest.getId() == R.id.appearanceFragment ? R.id.settingsFragment : dest.getId();
+            boolean detail = dest.getId() == R.id.appearanceFragment || dest.getId() == R.id.generalFragment;
+            int tab = detail ? R.id.settingsFragment : dest.getId();
             if (bottomNav.getMenu().findItem(tab) != null) {
                 bottomNav.getMenu().findItem(tab).setChecked(true);
             }
